@@ -1,0 +1,3 @@
+http://matthewphiong.com/managing-django-static-files-on-heroku
+http://stackoverflow.com/questions/9047054/heroku-handling-static-files-in-django-app
+https://devcenter.heroku.com/articles/django
