@@ -4,4 +4,5 @@ distribute==0.6.24
 dj-database-url==0.2.1
 django-crispy-forms==1.2.3
 flake8==1.7.0
+gunicorn==0.17.2
 wsgiref==0.1.2
