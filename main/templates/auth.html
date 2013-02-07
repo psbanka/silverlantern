@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block body %}
+{{ state }}
+    <form class="well" action="/login/" method="post">
+        <fieldset>
+        <legend>
+        Please log in
+        </legend>
+        {% if next %}
+        <input type="hidden" name="next" value="{{ next }}" />
+        {% endif %}
+        {{csrf_token}}
+        <label>username:</label>
+        <input type="text" name="username" value="{{ username}}" /><br />
+        <label>password:</label>
+        <input type="password" name="password" value="" /><br />
+
+        <input class="btn btn-primary" type="submit" value="Log In" />
+        </fieldset>
+    </form>
+{% endblock %}

@@ -4,8 +4,9 @@ from django.shortcuts import get_object_or_404, render
 from forms import MessageForm
 from contact import ContactForm
 from public.models import Poll, Choice
-from django.template import Context, loader
-from django.core.urlresolvers import reverse
+from django.template import Context
+from django.shortcuts import render_to_response
+from django.contrib.auth import authenticate, login
 
 import logging
 
@@ -15,6 +16,25 @@ logger = logging.getLogger(__name__)
 def index(request):
     # This view is missing all form handling logic for simplicity of the example
     return render(request, 'index.html', {'form': MessageForm()})
+
+def login_user(request):
+    state = "Please log in below..."
+    username = password = ''
+    if request.POST:
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+
+        user = authenticate(username=username, password=password)
+        if user is not None:
+            if user.is_active:
+                login(request, user)
+                state = "You're successfully logged in!"
+            else:
+                state = "Your account is not active, please contact the site admin."
+        else:
+            state = "Your username and/or password were incorrect."
+
+    return render_to_response('auth.html',{'state':state, 'username': username})
 
 def contact(request):
     if request.method == 'POST': # If the form has been submitted...

@@ -4,11 +4,12 @@
 <html lang="en">
 <head>
    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-   <link href="{{STATIC_URL}}/css/bootstrap.css" rel="stylesheet">
+   <link href="https://s3.amazonaws.com/silverlantern_static/css/bootstrap.css" rel="stylesheet">
+
    <title>{% block title %}{% endblock %}</title>
 </head>
 <body id="{% block body_id %}{% endblock %}">
-  <script src="{{STATIC_URL}}/js/bootstrap.js"></script>
+  <script src="https://s3.amazonaws.com/silverlantern_static/js/bootstrap.js"></script>
   <div id="body">
     {% block body %}
       <div>
