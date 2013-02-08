@@ -6,18 +6,12 @@ from django.contrib.auth.views import login
 from django.contrib import admin
 admin.autodiscover()
 
-urlpatterns = patterns('',
+urlpatterns = patterns(
+    '',
     url(r'^$', views.index, name='index'),
-    url(r'^login/$', login, {
-        'template_name': 'auth.html'
-    }),
+    url(r'^login/$', login, {'template_name': 'auth.html'}),
+    url(r'^accounts/profile/$', views.profile, name="profile"),
     url(r'^polls/', include('public.urls', namespace='polls')),
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
     url(r'^admin/', include(admin.site.urls)),
 )
-
-#if not settings.DEBUG:
-#if True:
-#    urlpatterns += patterns('',
-#        (r'^static/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.STATIC_ROOT}),
-#    )

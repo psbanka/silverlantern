@@ -14,10 +14,12 @@ import logging
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
 
-@login_required
+
 def index(request):
-    # This view is missing all form handling logic for simplicity of the example
+    # This view is missing all form handling logic
+    # for simplicity of the example
     return render(request, 'index.html', {'form': MessageForm()})
+
 
 def login_user(request):
     state = "Please log in below..."
@@ -35,30 +37,45 @@ def login_user(request):
                 state = "Your account is not active, please contact the site admin."
         else:
             state = "Your username and/or password were incorrect."
-    return render_to_response('auth.html',{'state':state, 'username': username})
+    return render_to_response('auth.html', {'state': state, 'username': username})
 
+
+@login_required
+def profile(request):
+    model = {
+        'username': request.user['username'],
+        'last_name': request.user['last_name'],
+        'first_name': request.user['first_name'],
+        'email': request.user['email'],
+    }
+    return render_to_response('profile.html', model)
+
+
+@login_required
 def contact(request):
-    if request.method == 'POST': # If the form has been submitted...
+    if request.method == 'POST':  # If the form has been submitted...
         print "POST CONDITION"
         logger.info("POST condition")
-        form = ContactForm(request.POST) # A form bound to the POST data
+        form = ContactForm(request.POST)  # A form bound to the POST data
         print "have form object"
-        if form.is_valid(): # All validation rules pass
+        if form.is_valid():  # All validation rules pass
             print "form is valid"
             # Process the data in form.cleaned_data
             # ...
-            return HttpResponseRedirect('/polls/thanks/') # Redirect after POST
+            return HttpResponseRedirect('/polls/thanks/')  # Redirect after POST
     else:
         print "GET CONDITION"
         logger.info("GET condition")
-        form = ContactForm() # An unbound form
+        form = ContactForm()  # An unbound form
 
     return render(request, 'contact.html', {
         'form': form,
     })
 
+
 def thanks(request):
     return HttpResponse("Thanks.")
+
 
 def pollview(request):
     latest_poll_list = Poll.objects.order_by('-pub_date')[:5]
@@ -67,6 +84,7 @@ def pollview(request):
     })
     return render(request, 'polls/index.html', context)
 
+
 def detail(request, poll_id):
     try:
         poll = Poll.objects.get(pk=poll_id)
@@ -74,9 +92,11 @@ def detail(request, poll_id):
         raise Http404
     return render(request, 'polls/detail.html', {'poll': poll})
 
+
 def results(request, poll_id):
     poll = get_object_or_404(Poll, pk=poll_id)
     return render(request, 'polls/results.html', {'poll': poll})
+
 
 def vote(request, poll_id):
     p = get_object_or_404(Poll, pk=poll_id)
