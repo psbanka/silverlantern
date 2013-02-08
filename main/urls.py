@@ -10,6 +10,7 @@ urlpatterns = patterns(
     '',
     url(r'^$', views.index, name='index'),
     url(r'^login/$', login, {'template_name': 'auth.html'}),
+    url(r'^logout/$', views.logout_view),
     url(r'^accounts/profile/$', views.profile, name="profile"),
     url(r'^polls/', include('public.urls', namespace='polls')),
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),

@@ -6,7 +6,7 @@ from contact import ContactForm
 from public.models import Poll, Choice
 from django.template import Context
 from django.shortcuts import render_to_response
-from django.contrib.auth import authenticate, login
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 
 import logging
@@ -38,6 +38,11 @@ def login_user(request):
         else:
             state = "Your username and/or password were incorrect."
     return render_to_response('auth.html', {'state': state, 'username': username})
+
+
+def logout_view(request):
+    logout(request)
+    return HttpResponseRedirect('/')
 
 
 @login_required
