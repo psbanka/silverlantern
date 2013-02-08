@@ -7,12 +7,14 @@ from public.models import Poll, Choice
 from django.template import Context
 from django.shortcuts import render_to_response
 from django.contrib.auth import authenticate, login
+from django.contrib.auth.decorators import login_required
 
 import logging
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
 
+@login_required
 def index(request):
     # This view is missing all form handling logic for simplicity of the example
     return render(request, 'index.html', {'form': MessageForm()})
@@ -33,7 +35,6 @@ def login_user(request):
                 state = "Your account is not active, please contact the site admin."
         else:
             state = "Your username and/or password were incorrect."
-
     return render_to_response('auth.html',{'state':state, 'username': username})
 
 def contact(request):

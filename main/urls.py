@@ -9,7 +9,7 @@ admin.autodiscover()
 urlpatterns = patterns('',
     url(r'^$', views.index, name='index'),
     url(r'^login/$', login, {
-        'template_name': 'main/auth.html'
+        'template_name': 'auth.html'
     }),
     url(r'^polls/', include('public.urls', namespace='polls')),
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
