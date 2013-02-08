@@ -43,10 +43,7 @@ def login_user(request):
 @login_required
 def profile(request):
     model = {
-        'username': request.user['username'],
-        'last_name': request.user['last_name'],
-        'first_name': request.user['first_name'],
-        'email': request.user['email'],
+        'user': request.user
     }
     return render_to_response('profile.html', model)
 

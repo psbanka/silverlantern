@@ -4,14 +4,15 @@
 {{ state }}
     <h1 class="well">Welcome {{first_name}}</h1>
     <table>
+        <caption>User information</caption>
         <thead>
         <tr><td>Key</td><td>Value</td></tr>
         </thead>
         <tbody>
-        <tr><td>Username</td><td>{{username}}</td></tr>
-        <tr><td>Email</td><td>{{email}}</td></tr>
-        <tr><td>First name</td><td>{{first_name}}</td></tr>
-        <tr><td>Last name</td><td>{{first_name}}</td></tr>
+        <tr><td>Username</td><td>{{user.username}}</td></tr>
+        <tr><td>Email</td><td>{{user.email}}</td></tr>
+        <tr><td>First name</td><td>{{user.first_name}}</td></tr>
+        <tr><td>Last name</td><td>{{user.last_name}}</td></tr>
         </tbody>
     </table>
 {% endblock %}
