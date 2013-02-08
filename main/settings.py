@@ -10,7 +10,7 @@ MANAGERS = ADMINS
 DATABASES = {
     'default': dj_database_url.config(),
 }
-LOGIN_URL="/auth/"
+LOGIN_URL = "/login/"
 TIME_ZONE = 'UTC'
 LANGUAGE_CODE = 'en-us'
 SITE_ID = 1
