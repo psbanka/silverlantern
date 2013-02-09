@@ -130,11 +130,12 @@ def oauth2callback(request):
             code = server_response.get('code')
             access_token = server_response.get('access_token')
             try:
-                expires_in = int(server_response.get('id_token'))
+                expires_in = int(server_response.get('expires_in'))
                 token_expiration = datetime.fromtimestamp(
                     expires_in + time.time())
                 request.user.token_expiration = token_expiration
             except ValueError as exp:
+                expires_in = server_response.get('expires_in')
                 logger.error("Exception: %s" % exp)
                 logger.error("Error converting expiration %s" % expires_in)
             token_type = server_response.get('token_type')
