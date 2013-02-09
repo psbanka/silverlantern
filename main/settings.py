@@ -31,8 +31,7 @@ USE_TZ = True
 MEDIA_ROOT = ''
 MEDIA_URL = ''
 STATIC_ROOT = ''
-STATIC_URL = 'https://s3.amazonaws.com/silverlantern_static'
-ADMIN_MEDIA_PREFIX = '/silverlantern_static/admin'
+STATIC_URL = 'https://s3.amazonaws.com/silverlantern_static/'
 STATICFILES_DIRS = ()
 STATICFILES_FINDERS = ()
 SECRET_KEY = '62na=h#x3)k6m&amp;r051hw_sz-9+0(vo9239xbs6d)tf69o!)c#x'
