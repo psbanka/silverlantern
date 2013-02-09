@@ -124,6 +124,7 @@ def oauth2callback(request):
         server_response = _get_auth_token(code)
         error = server_response.get("error")
         if error:
+            logger.info('ERROR RETURNED FROM THE SERVER')
             model['error'] = error
             model['authorized'] = False
         else:
@@ -156,6 +157,8 @@ def oauth2callback(request):
             request.user.id_token = id_token
             request.user.save()
             logger.info('--------------------8')
+    else:
+        logger.info('NO CODE RETURNED')
 
     return render_to_response('oauth_results.html', model)
 
