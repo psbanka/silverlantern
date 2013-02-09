@@ -21,4 +21,14 @@ class PollAdmin(admin.ModelAdmin):
     search_fields = ['question']
     date_hierarchy = 'pub_date'
 
-admin.site.register(Poll, PollAdmin, UserProfile)
+
+class UserProfileAdmin(admin.ModelAdmin):
+    list_display = (
+        'username', 'access_token', 'token_type', 'token_expiration'
+    )
+    list_filter = ['token_expiration']
+    search_fields = ['username']
+    date_hierarchy = 'token_expiration'
+
+admin.site.register(Poll, PollAdmin)
+admin.site.register(UserProfile, UserProfileAdmin)
