@@ -10,10 +10,14 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 
 import logging
+import os
+import urllib
+import json
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
-#logger = logging.getLogger('console')
+GOOGLE_ACCOUNTS_BASE_URL = 'https://accounts.google.com'
+REDIRECT_URI = 'http://www.silverlantern.net/oauth2callback'
 
 
 def index(request):
@@ -49,18 +53,45 @@ def logout_view(request):
 @login_required
 def profile(request):
     #url = "https://accounts.google.com/o/oauth2/auth?scope=%s&state=%s&redirect_uri=%s&response_type=code&client_id=%s&access_type=%s"
-    client_id = "554293961623.apps.googleusercontent.com"
+    client_id = os.environ['GOOGLE_CLIENT_ID']
     scope = 'https://mail.google.com/ profile'
-    redirect_url = 'http://www.silverlantern.net/oauth2callback'
 
     url = "https://accounts.google.com/o/oauth2/auth?scope=%s&redirect_uri=%s&response_type=code&client_id=%s"
-    url %= (scope, redirect_url, client_id)
+    url %= (scope, REDIRECT_URI, client_id)
     model = {
         'user': request.user,
         'google_auth_url': url
     }
     return render_to_response('profile.html', model)
 
+
+def _get_accounts_url(command):
+    """Generates the Google Accounts URL.
+
+    Args:
+      command: The command to execute.
+
+    Returns:
+      A URL for the given command.
+    """
+    return '%s/%s' % (GOOGLE_ACCOUNTS_BASE_URL, command)
+
+
+def _get_auth_token(authorization_code):
+    params = {}
+    params['client_id'] = os.environ['GOOGLE_CLIENT_ID']
+    params['client_secret'] = os.environ['GOOGLE_CLIENT_SECRET']
+    params['code'] = authorization_code
+    params['redirect_uri'] = REDIRECT_URI
+    params['grant_type'] = 'authorization_code'
+    request_url = _get_accounts_url('o/oauth2/token')
+
+    response = urllib.urlopen(request_url, urllib.urlencode(params)).read()
+    with open('/tmp/google_response.json', 'w') as fh:
+        fh.write(response)
+        fh.flush()
+    return json.loads(response)
+    
 
 def oauth2callback(request):
     if request.method == "POST":
@@ -72,10 +103,20 @@ def oauth2callback(request):
     code = request.GET.get('code')
     error = request.GET.get('error')
     model = {
-        'authorized': "NO",
+        'authorized': False,
         'code': code,
-        'error': error
+        'error': error,
+        'access_token': '',
     }
+    if code:
+        server_response = _get_auth_token(code)
+        for key, value in server_response:
+            logger.info("Key: %s / Value: %s" % (key, value))
+        if server_response.get("error"):
+            model['error'] = error
+        model['authorized'] = True
+        model['access_token'] = server_response.get('access_token')
+        
     return render_to_response('oauth_results.html', model)
 
 

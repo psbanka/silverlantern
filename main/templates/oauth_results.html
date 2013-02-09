@@ -4,8 +4,9 @@
 {{ state }}
     <h1>ERROR: {{error}}</h1>
     <h1>CODE: {{code}}</h1>
-    {% if authorized == 'yes' %}
+    {% if authorized %}
     <h1 class="well">You have been authorized!</h1>
+    <p>Access token: {{access_token}}</p>
     {% else %}
     <h1 class="well">Permission denied.</h1>
     {% endif %}
