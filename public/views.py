@@ -122,7 +122,7 @@ def oauth2callback(request):
     }
     if code:
         server_response = _get_auth_token(code)
-        for key, value in server_response.GET.items():
+        for key, value in server_response.items():
             msg = "Server Response: Key: (%s) Value: (%s)" % (key, value)
             logger.info(msg)
         error = server_response.get("error")
