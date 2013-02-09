@@ -110,7 +110,7 @@ def oauth2callback(request):
     }
     if code:
         server_response = _get_auth_token(code)
-        for key, value in server_response:
+        for key, value in server_response.items():
             logger.info("Key: %s / Value: %s" % (key, value))
         if server_response.get("error"):
             model['error'] = error
