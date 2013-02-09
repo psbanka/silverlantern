@@ -13,6 +13,7 @@ import logging
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
+#logger = logging.getLogger('console')
 
 
 def index(request):
@@ -47,17 +48,42 @@ def logout_view(request):
 
 @login_required
 def profile(request):
+    #url = "https://accounts.google.com/o/oauth2/auth?scope=%s&state=%s&redirect_uri=%s&response_type=code&client_id=%s&access_type=%s"
+    client_id = "554293961623.apps.googleusercontent.com"
+    scope = 'https://mail.google.com/ profile'
+    redirect_url = 'http://www.silverlantern.net/oauth2callback'
+
+    url = "https://accounts.google.com/o/oauth2/auth?scope=%s&redirect_uri=%s&response_type=code&client_id=%s"
+    url %= (scope, redirect_url, client_id)
     model = {
-        'user': request.user
+        'user': request.user,
+        'google_auth_url': url
     }
     return render_to_response('profile.html', model)
+
+
+def oauth2callback(request):
+    if request.method == "POST":
+        logger.error("POST condition")
+    if request.method == "GET":
+        logger.info("GET condition")
+    for key, value in request.GET.items():
+        logger.info("Key: %s / Value: %s" % (key, value))
+    code = request.GET.get('code')
+    error = request.GET.get('error')
+    model = {
+        'authorized': "NO",
+        'code': code,
+        'error': error
+    }
+    return render_to_response('oauth_results.html', model)
 
 
 @login_required
 def contact(request):
     if request.method == 'POST':  # If the form has been submitted...
         print "POST CONDITION"
-        logger.info("POST condition")
+        logger.info("codePOST condition")
         form = ContactForm(request.POST)  # A form bound to the POST data
         print "have form object"
         if form.is_valid():  # All validation rules pass

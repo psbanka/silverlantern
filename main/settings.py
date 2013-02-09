@@ -1,15 +1,25 @@
 # Django settings for main project.
 import os
-import dj_database_url
+import sys
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 PROJECT_PATH = os.path.dirname(os.path.abspath(__file__))
 ADMINS = ()
 MANAGERS = ADMINS
+
 DATABASES = {
-    'default': dj_database_url.config(),
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'silverlantern_dev.sqlite',
+    }
 }
+if os.environ.get('ENV') != 'dev':
+    import dj_database_url
+    DATABASES = {
+        'default': dj_database_url.config(),
+    }
+
 LOGIN_URL = "/login/"
 TIME_ZONE = 'UTC'
 LANGUAGE_CODE = 'en-us'
@@ -69,6 +79,11 @@ LOGGING = {
         }
     },
     'handlers': {
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'stream': sys.stdout
+        },
         'mail_admins': {
             'level': 'ERROR',
             'filters': ['require_debug_false'],
@@ -76,6 +91,10 @@ LOGGING = {
         }
     },
     'loggers': {
+        'public.views': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
         'django.request': {
             'handlers': ['mail_admins'],
             'level': 'ERROR',

@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+{% block body %}
+{{ state }}
+    <h1>ERROR: {{error}}</h1>
+    <h1>CODE: {{code}}</h1>
+    {% if authorized == 'yes' %}
+    <h1 class="well">You have been authorized!</h1>
+    {% else %}
+    <h1 class="well">Permission denied.</h1>
+    {% endif %}
+    <a href="/logout/">Logout</a>
+{% endblock %}
