@@ -127,26 +127,35 @@ def oauth2callback(request):
             model['error'] = error
             model['authorized'] = False
         else:
+            logger.info('--------------------0')
             code = server_response.get('code')
+            logger.info('--------------------1')
             access_token = server_response.get('access_token')
+            logger.info('--------------------2')
             try:
                 expires_in = int(server_response.get('expires_in'))
                 token_expiration = datetime.fromtimestamp(
                     expires_in + time.time())
                 request.user.token_expiration = token_expiration
+                logger.info('--------------------3')
             except ValueError as exp:
                 expires_in = server_response.get('expires_in')
                 logger.error("Exception: %s" % exp)
                 logger.error("Error converting expiration %s" % expires_in)
+            logger.info('--------------------4')
             token_type = server_response.get('token_type')
+            logger.info('--------------------5')
             id_token = server_response.get('id_token')
+            logger.info('--------------------6')
             model['authorized'] = True
             access_token = model['access_token']
             model['access_token'] = access_token
+            logger.info('--------------------7')
             request.user.access_token = access_token
             request.user.token_type = token_type
             request.user.id_token = id_token
             request.user.save()
+            logger.info('--------------------8')
 
     return render_to_response('oauth_results.html', model)
 
