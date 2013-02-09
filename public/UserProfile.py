@@ -6,6 +6,9 @@ from django.db import models
 class UserProfile(models.Model):
     user = models.OneToOneField(User)
     access_token = models.CharField(max_length=200)
+    token_expiration = models.DateField()
+    token_type = models.Charfield(max_length=20)
+    id_token = models.Charfield(max_length=1000)
 
     def __str__(self):
         return "%s's profile" % self.user

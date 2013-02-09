@@ -13,6 +13,8 @@ import logging
 import os
 import urllib
 import json
+import time
+from datetime import datetime
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -39,10 +41,13 @@ def login_user(request):
                 login(request, user)
                 state = "You're successfully logged in!"
             else:
-                state = "Your account is not active, please contact the site admin."
+                state = "Your account is not active, "\
+                    "please contact the site admin."
         else:
             state = "Your username and/or password were incorrect."
-    return render_to_response('auth.html', {'state': state, 'username': username})
+    return render_to_response('auth.html', {
+        'state': state, 'username': username
+    })
 
 
 def logout_view(request):
@@ -52,11 +57,13 @@ def logout_view(request):
 
 @login_required
 def profile(request):
-    #url = "https://accounts.google.com/o/oauth2/auth?scope=%s&state=%s&redirect_uri=%s&response_type=code&client_id=%s&access_type=%s"
+    #url = "https://accounts.google.com/o/oauth2/auth?scope=%s&state=%s
+    #&redirect_uri=%s&response_type=code&client_id=%s&access_type=%s"
     client_id = os.environ['GOOGLE_CLIENT_ID']
     scope = 'https://mail.google.com/ profile'
 
-    url = "https://accounts.google.com/o/oauth2/auth?scope=%s&redirect_uri=%s&response_type=code&client_id=%s"
+    url = "https://accounts.google.com/o/oauth2/auth?scope=%s&"\
+        "redirect_uri=%s&response_type=code&client_id=%s"
     url %= (scope, REDIRECT_URI, client_id)
     model = {
         'user': request.user,
@@ -97,6 +104,7 @@ def _get_auth_token(authorization_code):
     return json.loads(response)
 
 
+@login_required
 def oauth2callback(request):
     if request.method == "POST":
         logger.error("POST condition")
@@ -114,15 +122,30 @@ def oauth2callback(request):
     }
     if code:
         server_response = _get_auth_token(code)
-        for key, value in server_response.items():
-            logger.info("Key: %s / Value: %s" % (key, value))
-        if server_response.get("error"):
+        error = server_response.get("error")
+        if error:
             model['error'] = error
-        model['authorized'] = True
-        access_token = model['access_token']
-        model['access_token'] = access_token
-        request.user.access_token = access_token
-        request.user.save()
+            model['authorized'] = False
+        else:
+            code = server_response.get('code')
+            access_token = server_response.get('access_token')
+            try:
+                expires_in = int(server_response.get('id_token'))
+                token_expiration = datetime.fromtimestamp(
+                    expires_in + time.time())
+                request.user.token_expiration = token_expiration
+            except ValueError as exp:
+                logger.error("Exception: %s" % exp)
+                logger.error("Error converting expiration %s" % expires_in)
+            token_type = server_response.get('token_type')
+            id_token = server_response.get('id_token')
+            model['authorized'] = True
+            access_token = model['access_token']
+            model['access_token'] = access_token
+            request.user.access_token = access_token
+            request.user.token_type = token_type
+            request.user.id_token = id_token
+            request.user.save()
 
     return render_to_response('oauth_results.html', model)
 
@@ -130,17 +153,13 @@ def oauth2callback(request):
 @login_required
 def contact(request):
     if request.method == 'POST':  # If the form has been submitted...
-        print "POST CONDITION"
         logger.info("codePOST condition")
         form = ContactForm(request.POST)  # A form bound to the POST data
-        print "have form object"
         if form.is_valid():  # All validation rules pass
-            print "form is valid"
             # Process the data in form.cleaned_data
             # ...
-            return HttpResponseRedirect('/polls/thanks/')  # Redirect after POST
+            return HttpResponseRedirect('/polls/thanks/')
     else:
-        print "GET CONDITION"
         logger.info("GET condition")
         form = ContactForm()  # An unbound form
 
