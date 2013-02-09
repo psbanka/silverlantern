@@ -152,7 +152,6 @@ def oauth2callback(request):
             id_token = server_response.get('id_token')
             logger.info('--------------------6')
             model['authorized'] = True
-            access_token = model['access_token']
             model['access_token'] = access_token
             logger.info('--------------------7')
             request.user.access_token = access_token
