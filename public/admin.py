@@ -24,7 +24,7 @@ class PollAdmin(admin.ModelAdmin):
 
 class UserProfileAdmin(admin.ModelAdmin):
     list_display = (
-        'username', 'access_token', 'token_type', 'token_expiration'
+        'user', 'access_token', 'token_type', 'token_expiration'
     )
     list_filter = ['token_expiration']
     search_fields = ['username']
