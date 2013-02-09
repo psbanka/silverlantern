@@ -60,7 +60,7 @@ def profile(request):
     url %= (scope, REDIRECT_URI, client_id)
     model = {
         'user': request.user,
-        'google_auth_url': url
+        'google_auth_url': url,
     }
     return render_to_response('profile.html', model)
 
@@ -78,6 +78,10 @@ def _get_accounts_url(command):
 
 
 def _get_auth_token(authorization_code):
+    """
+    Go ask google for an access token for this user instead of
+    just an authorization code.
+    """
     params = {}
     params['client_id'] = os.environ['GOOGLE_CLIENT_ID']
     params['client_secret'] = os.environ['GOOGLE_CLIENT_SECRET']
@@ -91,7 +95,7 @@ def _get_auth_token(authorization_code):
         fh.write(response)
         fh.flush()
     return json.loads(response)
-    
+
 
 def oauth2callback(request):
     if request.method == "POST":
@@ -115,8 +119,11 @@ def oauth2callback(request):
         if server_response.get("error"):
             model['error'] = error
         model['authorized'] = True
-        model['access_token'] = server_response.get('access_token')
-        
+        access_token = model['access_token']
+        model['access_token'] = access_token
+        request.user.access_token = access_token
+        request.user.save()
+
     return render_to_response('oauth_results.html', model)
 
 

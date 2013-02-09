@@ -21,6 +21,7 @@ if os.environ.get('ENV') != 'dev':
     }
 
 LOGIN_URL = "/login/"
+AUTH_PROFILE_MODULE = 'public.UserProfile'
 TIME_ZONE = 'UTC'
 LANGUAGE_CODE = 'en-us'
 SITE_ID = 1
