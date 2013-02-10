@@ -10,6 +10,7 @@ from datetime import datetime
 from public.static_data import REDIRECT_URI, GOOGLE_ACCOUNTS_BASE_URL
 from public.static_data import TEST_GOOGLE_REPLY, OK, FAIL
 import django.utils.timezone
+from pprint import pformat
 
 logger = logging.getLogger(__name__)
 
@@ -38,6 +39,14 @@ def _generate_oauth2_string(username, access_token, base64_encode=True):
     return auth_string
 
 
+def log_object(object, title):
+    "Logs an entire object to the log"
+    logger.info("===START==========================%s" % title.upper())
+    for line in pformat(object):
+        logger.info(line)
+    logger.info("===FINISH=========================%s" % title.upper())
+
+
 def test_imap_auth(user, auth_string):
     """
     Authenticates to IMAP with the given auth_string.
@@ -59,6 +68,7 @@ def test_imap_auth(user, auth_string):
     logger.info("auth_string: (%s)" % auth_string)
     imap_conn.select('INBOX')
     logger.info("IMAP ================== 4")
+    log_object(dir(imap_conn), "imap_conn methods")
 
 
 def _get_accounts_url(command):
