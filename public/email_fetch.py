@@ -94,14 +94,13 @@ def _get_auth_token(authorization_code):
     params['grant_type'] = 'authorization_code'
     request_url = _get_accounts_url('o/oauth2/token')
 
-    response = urllib.urlopen(request_url, urllib.urlencode(params)).read()
-    with open('/tmp/google_response.json', 'w') as fh:
-        fh.write(response)
-        fh.flush()
+    response = json.loads(
+        urllib.urlopen(request_url, urllib.urlencode(params)).read())
+    # TODO: Security flaw. Remove this logging in the fullness of time.
     for key, value in response.items():
         msg = "Server Response: Key: (%s) Value: (%s)" % (key, value)
         logger.debug(msg)
-    return json.loads(response)
+    return response
 
 
 def _token_is_current(profile):
