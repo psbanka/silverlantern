@@ -42,7 +42,7 @@ def _generate_oauth2_string(username, access_token, base64_encode=True):
 def log_object(object, title):
     "Logs an entire object to the log"
     logger.info("===START==========================%s" % title.upper())
-    for line in pformat(object):
+    for line in pformat(object).split('\n'):
         logger.info(line)
     logger.info("===FINISH=========================%s" % title.upper())
 
