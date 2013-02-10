@@ -9,6 +9,7 @@ import imaplib
 from datetime import datetime
 from public.static_data import REDIRECT_URI, GOOGLE_ACCOUNTS_BASE_URL
 from public.static_data import TEST_GOOGLE_REPLY, OK, FAIL
+import django.utils.timezone
 
 logger = logging.getLogger(__name__)
 
@@ -97,48 +98,61 @@ def _get_auth_token(authorization_code):
     with open('/tmp/google_response.json', 'w') as fh:
         fh.write(response)
         fh.flush()
+    for key, value in response.items():
+        msg = "Server Response: Key: (%s) Value: (%s)" % (key, value)
+        logger.debug(msg)
     return json.loads(response)
+
+
+def _token_is_current(profile):
+    token_expiration = profile.token_expiration
+    if token_expiration:
+        if token_expiration > django.utils.timezone.now():
+            return True
+    return False
 
 
 def _fetch_access_token(user):
     """
     We're going to go ask google if we can have a temporary access-token
     """
-    status = FAIL
     profile = user.get_profile()
     code = profile.code
-    if code:
-        server_response = _get_auth_token(code)
-        for key, value in server_response.items():
-            msg = "Server Response: Key: (%s) Value: (%s)" % (key, value)
-            logger.debug(msg)
-        error = server_response.get("error")
-        if error:
-            logger.info('ERROR RETURNED FROM THE SERVER (%s)' % error)
-        else:
-            code = server_response.get('code')
-            access_token = server_response.get('access_token')
-            try:
-                expires_in = int(server_response.get('expires_in'))
-                token_expiration = datetime.fromtimestamp(
-                    expires_in + time.time())
-                logger.info("token_expiration: (%s)" % token_expiration)
-                profile.token_expiration = token_expiration
-            except ValueError as exp:
-                expires_in = server_response.get('expires_in')
-                logger.error("Exception: %s" % exp)
-                logger.error("Error converting expiration %s" % expires_in)
-            token_type = server_response.get('token_type')
-            id_token = server_response.get('id_token')
-            profile.access_token = access_token
-            profile.token_type = token_type
-            profile.id_token = id_token
-            profile.save()
-            status = OK
-    else:
-        logger.info('NO CODE RETURNED')
-        status = FAIL
-    return status
+    if not code:
+        logger.info('User has no code from Google.')
+        return FAIL
+    if _token_is_current(profile):
+        msg = "User has a current access_token. No need to get a new one"
+        logger.info(msg)
+        return OK
+
+    server_response = _get_auth_token(code)
+    error = server_response.get("error")
+    if error:
+        logger.info('ERROR RETURNED FROM THE SERVER (%s)' % error)
+        return FAIL
+
+    code = server_response.get('code')
+    access_token = server_response.get('access_token')
+    try:
+        expires_in = int(server_response.get('expires_in'))
+        token_expiration = datetime.fromtimestamp(
+            expires_in + time.time())
+        utc_exp = django.utils.timezone.make_aware(
+            token_expiration, django.utils.timezone.get_default_timezone())
+        logger.info("token_expiration: (%s)" % utc_exp)
+        profile.token_expiration = utc_exp
+    except ValueError as exp:
+        expires_in = server_response.get('expires_in')
+        logger.error("Exception: %s" % exp)
+        logger.error("Error converting expiration %s" % expires_in)
+    token_type = server_response.get('token_type')
+    id_token = server_response.get('id_token')
+    profile.access_token = access_token
+    profile.token_type = token_type
+    profile.id_token = id_token
+    profile.save()
+    return OK
 
 
 def _get_email(user):

@@ -11,7 +11,7 @@ class UserProfile(models.Model):
     user = models.OneToOneField(User)
     code = models.CharField(max_length=200, blank=True, null=True)
     access_token = models.CharField(max_length=200, blank=True, null=True)
-    token_expiration = models.DateField(blank=True, null=True)
+    token_expiration = models.DateTimeField(blank=True, null=True)
     token_type = models.CharField(max_length=20, blank=True, null=True)
     id_token = models.CharField(max_length=1000, blank=True, null=True)
 
