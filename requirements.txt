@@ -5,6 +5,12 @@ dj-database-url==0.2.1
 django-crispy-forms==1.2.3
 flake8==1.7.0
 gunicorn==0.17.2
-psycopg2==2.4.6
+ipython==0.13.1
+python-dateutil==2.1
+pytz==2012j
+redis==2.7.2
+rq==0.3.5
 s3cmd==1.1.0-beta3
+six==1.2.0
+times==0.6
 wsgiref==0.1.2

@@ -16,6 +16,10 @@ import urllib
 import json
 import time
 from datetime import datetime
+from rq import Queue
+from worker import conn
+
+from public.fake_long_running_task import fake_long_running_task
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
@@ -72,6 +76,15 @@ def profile(request):
         'google_auth_url': url,
     }
     return render_to_response('profile.html', model)
+
+
+def fetch_my_mail(request):
+    """
+    This is going to use our google credentials to go fetch all our mail!
+    """
+    q = Queue(connection=conn)
+    q.enqueue(fake_long_running_task)
+    return HttpResponse("Job queued.")
 
 
 def _get_accounts_url(command):
