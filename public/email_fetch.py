@@ -56,7 +56,7 @@ def test_imap_auth(user, auth_string):
     imap_conn.debug = 4
     logger.info("IMAP ================== 2")
     imap_conn.authenticate('XOAUTH2', lambda x: auth_string)
-    logger.info("IMAP ================== 3")
+    logger.info("auth_string: (%s)" % auth_string)
     imap_conn.select('INBOX')
     logger.info("IMAP ================== 4")
 
@@ -94,13 +94,8 @@ def _get_auth_token(authorization_code):
     params['grant_type'] = 'authorization_code'
     request_url = _get_accounts_url('o/oauth2/token')
 
-    response = json.loads(
+    return json.loads(
         urllib.urlopen(request_url, urllib.urlencode(params)).read())
-    # TODO: Security flaw. Remove this logging in the fullness of time.
-    for key, value in response.items():
-        msg = "Server Response: Key: (%s) Value: (%s)" % (key, value)
-        logger.debug(msg)
-    return response
 
 
 def _token_is_current(profile):
