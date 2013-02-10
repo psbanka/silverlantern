@@ -1,29 +1,22 @@
 # -*- coding: utf-8 -*-
-from django.http import HttpResponseRedirect, HttpResponse, Http404
-from django.shortcuts import get_object_or_404, render
+from django.http import HttpResponseRedirect, HttpResponse
+#from django.http import Http404
+#from django.shortcuts import get_object_or_404
+from django.shortcuts import render
 from contact import ContactForm
-from public.models import Poll, Choice
-from public.test_data import TEST_GOOGLE_REPLY
-from django.template import Context
 from django.shortcuts import render_to_response
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-
 import logging
 import os
-import urllib
-import json
-import time
-from datetime import datetime
 from rq import Queue
 from worker import conn
 
-from public.fake_long_running_task import fake_long_running_task
+from public.email_fetch import email_fetch
+from public.static_data import REDIRECT_URI, TEST_OAUTH_CALLBACK
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
-GOOGLE_ACCOUNTS_BASE_URL = 'https://accounts.google.com'
-REDIRECT_URI = 'http://www.silverlantern.net/oauth2callback'
 
 
 def index(request):
@@ -71,9 +64,14 @@ def profile(request):
     client_id = os.environ['GOOGLE_CLIENT_ID']
     scope = 'https://mail.google.com/ profile'
 
-    url = "https://accounts.google.com/o/oauth2/auth?scope=%s&"\
-        "redirect_uri=%s&response_type=code&client_id=%s"
-    url %= (scope, REDIRECT_URI, client_id)
+    url = ''
+    if os.environ['ENV'] == 'dev':
+        url = TEST_OAUTH_CALLBACK
+    else:
+        url = "https://accounts.google.com/o/oauth2/auth?scope=%s&"\
+            "redirect_uri=%s&response_type=code&client_id=%s"
+        url %= (scope, REDIRECT_URI, client_id)
+
     model = {
         'user': request.user,
         'profile': request.user.get_profile(),
@@ -82,48 +80,14 @@ def profile(request):
     return render_to_response('profile.html', model)
 
 
+@login_required
 def fetch_my_mail(request):
     """
     This is going to use our google credentials to go fetch all our mail!
     """
     q = Queue(connection=conn)
-    q.enqueue(fake_long_running_task)
+    q.enqueue(email_fetch, request.user)
     return HttpResponse("Job queued.")
-
-
-def _get_accounts_url(command):
-    """Generates the Google Accounts URL.
-
-    Args:
-      command: The command to execute.
-
-    Returns:
-      A URL for the given command.
-    """
-    return '%s/%s' % (GOOGLE_ACCOUNTS_BASE_URL, command)
-
-
-def _get_auth_token(authorization_code):
-    """
-    Go ask google for an access token for this user instead of
-    just an authorization code.
-    """
-    if os.environ.get("ENV") == 'dev':
-        return TEST_GOOGLE_REPLY
-
-    params = {}
-    params['client_id'] = os.environ['GOOGLE_CLIENT_ID']
-    params['client_secret'] = os.environ['GOOGLE_CLIENT_SECRET']
-    params['code'] = authorization_code
-    params['redirect_uri'] = REDIRECT_URI
-    params['grant_type'] = 'authorization_code'
-    request_url = _get_accounts_url('o/oauth2/token')
-
-    response = urllib.urlopen(request_url, urllib.urlencode(params)).read()
-    with open('/tmp/google_response.json', 'w') as fh:
-        fh.write(response)
-        fh.flush()
-    return json.loads(response)
 
 
 @login_required
@@ -135,56 +99,25 @@ def oauth2callback(request):
     for key, value in request.GET.items():
         logger.info("Key: %s / Value: %s" % (key, value))
     code = request.GET.get('code')
-    error = request.GET.get('error')
     model = {
         'authorized': False,
-        'code': code,
-        'error': error,
-        'access_token': '',
+        'message': ''
     }
     if code:
-        server_response = _get_auth_token(code)
-        for key, value in server_response.items():
-            msg = "Server Response: Key: (%s) Value: (%s)" % (key, value)
-            logger.info(msg)
-        error = server_response.get("error")
-        if error:
-            logger.info('ERROR RETURNED FROM THE SERVER')
-            model['error'] = error
-            model['authorized'] = False
-        else:
-            logger.info('--------------------0')
-            code = server_response.get('code')
-            logger.info('--------------------1')
-            access_token = server_response.get('access_token')
-            logger.info('--------------------2')
-            profile = request.user.get_profile()
-            try:
-                expires_in = int(server_response.get('expires_in'))
-                token_expiration = datetime.fromtimestamp(
-                    expires_in + time.time())
-                logger.info("token_expiration: (%s)" % token_expiration)
-                profile.token_expiration = token_expiration
-                logger.info('--------------------3')
-            except ValueError as exp:
-                expires_in = server_response.get('expires_in')
-                logger.error("Exception: %s" % exp)
-                logger.error("Error converting expiration %s" % expires_in)
-            logger.info('--------------------4')
-            token_type = server_response.get('token_type')
-            logger.info('--------------------5')
-            id_token = server_response.get('id_token')
-            logger.info('--------------------6')
-            model['authorized'] = True
-            model['access_token'] = access_token
-            logger.info('--------------------7')
-            profile.access_token = access_token
-            profile.token_type = token_type
-            profile.id_token = id_token
-            profile.save()
-            logger.info('--------------------8')
+        profile = request.user.get_profile()
+        profile.code = code
+        profile.save()
+        q = Queue(connection=conn)
+        q.enqueue(email_fetch, request.user)
+        model['message'] = "Fetching email..."
+        model['authorized'] = True
     else:
-        logger.info('NO CODE RETURNED')
+        model['authorized'] = False
+        error = request.GET.get('error')
+        if error:
+            model['message'] = error
+        else:
+            model['message'] = "Not authorized. Unknown reason."
 
     return render_to_response('oauth_results.html', model)
 
@@ -209,43 +142,3 @@ def contact(request):
 
 def thanks(request):
     return HttpResponse("Thanks.")
-
-
-def pollview(request):
-    latest_poll_list = Poll.objects.order_by('-pub_date')[:5]
-    context = Context({
-        'latest_poll_list': latest_poll_list,
-    })
-    return render(request, 'polls/index.html', context)
-
-
-def detail(request, poll_id):
-    try:
-        poll = Poll.objects.get(pk=poll_id)
-    except Poll.DoesNotExist:
-        raise Http404
-    return render(request, 'polls/detail.html', {'poll': poll})
-
-
-def results(request, poll_id):
-    poll = get_object_or_404(Poll, pk=poll_id)
-    return render(request, 'polls/results.html', {'poll': poll})
-
-
-def vote(request, poll_id):
-    p = get_object_or_404(Poll, pk=poll_id)
-    try:
-        selected_choice = p.choice_set.get(pk=request.POST['choice'])
-    except (KeyError, Choice.DoesNotExist):
-        # Redisplay the poll voting form.
-        return render(request, 'polls/detail.html', {
-            'poll': p,
-            'error_message': "You didn't select a choice.",
-        })
-    else:
-        selected_choice.votes += 1
-        selected_choice.save()
-        # Always return an HttpResponseRedirect after successfully dealing
-        # with POST data. This prevents data from being posted twice if a
-        # user hits the Back button.
-        return HttpResponseRedirect('/polls/%s/results' % p.id)

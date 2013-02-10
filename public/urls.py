@@ -6,8 +6,4 @@ urlpatterns = patterns(
     '',
     url(r'thanks/$', views.thanks, name='thanks'),
     url(r'^contact$', views.contact, name='contact'),
-    url(r'^$', views.pollview, name='index'),
-    url(r'^(?P<poll_id>\d+)/$', views.detail, name='detail'),
-    url(r'^(?P<poll_id>\d+)/results/$', views.results, name='results'),
-    url(r'^(?P<poll_id>\d+)/vote/$', views.vote, name='vote'),
 )
