@@ -92,6 +92,10 @@ LOGGING = {
         }
     },
     'loggers': {
+        'public.models': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+        },
         'public.views': {
             'handlers': ['console'],
             'level': 'DEBUG',

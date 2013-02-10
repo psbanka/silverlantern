@@ -4,6 +4,7 @@ from django.shortcuts import get_object_or_404, render
 from forms import MessageForm
 from contact import ContactForm
 from public.models import Poll, Choice
+from public.test_data import TEST_GOOGLE_REPLY
 from django.template import Context
 from django.shortcuts import render_to_response
 from django.contrib.auth import authenticate, login, logout
@@ -67,6 +68,7 @@ def profile(request):
     url %= (scope, REDIRECT_URI, client_id)
     model = {
         'user': request.user,
+        'profile': request.user.get_profile(),
         'google_auth_url': url,
     }
     return render_to_response('profile.html', model)
@@ -89,6 +91,9 @@ def _get_auth_token(authorization_code):
     Go ask google for an access token for this user instead of
     just an authorization code.
     """
+    if os.environ.get("ENV") == 'dev':
+        return TEST_GOOGLE_REPLY
+
     params = {}
     params['client_id'] = os.environ['GOOGLE_CLIENT_ID']
     params['client_secret'] = os.environ['GOOGLE_CLIENT_SECRET']
@@ -136,11 +141,13 @@ def oauth2callback(request):
             logger.info('--------------------1')
             access_token = server_response.get('access_token')
             logger.info('--------------------2')
+            profile = request.user.get_profile()
             try:
                 expires_in = int(server_response.get('expires_in'))
                 token_expiration = datetime.fromtimestamp(
                     expires_in + time.time())
-                request.user.token_expiration = token_expiration
+                logger.info("token_expiration: (%s)" % token_expiration)
+                profile.token_expiration = token_expiration
                 logger.info('--------------------3')
             except ValueError as exp:
                 expires_in = server_response.get('expires_in')
@@ -154,10 +161,10 @@ def oauth2callback(request):
             model['authorized'] = True
             model['access_token'] = access_token
             logger.info('--------------------7')
-            request.user.access_token = access_token
-            request.user.token_type = token_type
-            request.user.id_token = id_token
-            request.user.save()
+            profile.access_token = access_token
+            profile.token_type = token_type
+            profile.id_token = id_token
+            profile.save()
             logger.info('--------------------8')
     else:
         logger.info('NO CODE RETURNED')
