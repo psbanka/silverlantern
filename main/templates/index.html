@@ -3,5 +3,9 @@
 
 {% block content %}
 <h1>Welcome to SilverLantern</h1>
+{% if user.is_authenticated %}
+<p>Welcome, {{user.username}}, proceed to your <a href='/accounts/profile/'>dashboard</a> to get started!</p>
+{%else%}
 <p>Please <a href='/login/'>log in</a> to get started!</p>
+{%endif%}
 {% endblock %}

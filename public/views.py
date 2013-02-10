@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.http import HttpResponseRedirect, HttpResponse, Http404
 from django.shortcuts import get_object_or_404, render
-from forms import MessageForm
 from contact import ContactForm
 from public.models import Poll, Choice
 from public.test_data import TEST_GOOGLE_REPLY
@@ -28,9 +27,14 @@ REDIRECT_URI = 'http://www.silverlantern.net/oauth2callback'
 
 
 def index(request):
-    # This view is missing all form handling logic
-    # for simplicity of the example
-    return render(request, 'index.html', {'form': MessageForm()})
+    model = {
+        'user': request.user,
+    }
+    return render_to_response('index.html', model)
+
+    # Example of how to do a nice form:
+    #from forms import MessageForm
+    #return render(request, 'index.html', {'form': MessageForm()})
 
 
 def login_user(request):
