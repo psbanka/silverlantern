@@ -66,9 +66,17 @@ def test_imap_auth(user, auth_string):
     logger.info("IMAP ================== 2")
     imap_conn.authenticate('XOAUTH2', lambda x: auth_string)
     logger.info("auth_string: (%s)" % auth_string)
-    imap_conn.select('INBOX')
     logger.info("IMAP ================== 4")
     log_object(dir(imap_conn), "imap_conn methods")
+    try:
+        log_object(imap_conn.list(), 'imap_conn.list()')
+    except:
+        logger.info("list failed")
+    try:
+        messages = imap_conn.select("SENT")
+        logger.info("MESSAGES: %s" % messages)
+    except:
+        logger.info("list failed")
 
 
 def _get_accounts_url(command):
