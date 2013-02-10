@@ -67,16 +67,28 @@ def test_imap_auth(user, auth_string):
     imap_conn.authenticate('XOAUTH2', lambda x: auth_string)
     logger.info("auth_string: (%s)" % auth_string)
     logger.info("IMAP ================== 4")
-    log_object(dir(imap_conn), "imap_conn methods")
     try:
         log_object(imap_conn.list(), 'imap_conn.list()')
     except:
         logger.info("list failed")
     try:
-        messages = imap_conn.select("SENT")
+        messages = imap_conn.select("[Gmail]/Sent Mail")
         logger.info("MESSAGES: %s" % messages)
     except:
-        logger.info("list failed")
+        logger.info("SELECT failed")
+    try:
+        typ1, data1 = imap_conn.search(None, 'ALL')
+        logger.info("typ1: %s" % typ1)
+        for num in data1[0].split():
+            typ2, data = imap_conn.fetch(num, '(RFC822)')
+            logger.info("typ2: %s" % typ2)
+            logger.info('Message %s' % num)
+            for line in data[0][1].split('\n'):
+                logger.info('||%s||' % line)
+        imap_conn.close()
+        imap_conn.logout()
+    except:
+        logger.info("FETCH FAILED")
 
 
 def _get_accounts_url(command):
