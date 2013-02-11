@@ -12,7 +12,7 @@ import os
 from rq import Queue
 from worker import conn
 
-from public.email_fetch import email_fetch
+from public.email_fetch import EmailAnalyzer
 from public.static_data import REDIRECT_URI, TEST_OAUTH_CALLBACK
 
 # Get an instance of a logger
@@ -86,7 +86,8 @@ def fetch_my_mail(request):
     This is going to use our google credentials to go fetch all our mail!
     """
     q = Queue(connection=conn)
-    q.enqueue(email_fetch, request.user)
+    email_analyzer = EmailAnalyzer(request.user)
+    q.enqueue(email_analyzer.process)
     return HttpResponse("Job queued.")
 
 
@@ -108,7 +109,8 @@ def oauth2callback(request):
         profile.code = code
         profile.save()
         q = Queue(connection=conn)
-        q.enqueue(email_fetch, request.user)
+        email_analyzer = EmailAnalyzer(request.user)
+        q.enqueue(email_analyzer.process)
         model['message'] = "Fetching email..."
         model['authorized'] = True
     else:

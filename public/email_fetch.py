@@ -5,90 +5,21 @@ import os
 import logging
 import base64
 import imaplib
+import email
+import re
+from collections import Counter
 
 from datetime import datetime
 from public.static_data import REDIRECT_URI, GOOGLE_ACCOUNTS_BASE_URL
 from public.static_data import TEST_GOOGLE_REPLY, OK, FAIL
+from public.static_data import TEST_EMAIL1, TEST_EMAIL2
+from public.models import WordUse
+
 import django.utils.timezone
 from pprint import pformat
 
 logger = logging.getLogger(__name__)
-
-
-###############################################
-## Lifted from Google's oauth.py
-###############################################
-
-def _generate_oauth2_string(username, access_token, base64_encode=True):
-    """
-    Generates an IMAP OAuth2 authentication string.
-
-    See https://developers.google.com/google-apps/gmail/oauth2_overview
-
-    Args:
-      username: the username (email address) of the account to authenticate
-      access_token: An OAuth2 access token.
-      base64_encode: Whether to base64-encode the output.
-
-    Returns:
-      The SASL argument for the OAuth2 mechanism.
-    """
-    auth_string = 'user=%s\1auth=Bearer %s\1\1' % (username, access_token)
-    if base64_encode:
-        auth_string = base64.b64encode(auth_string)
-    return auth_string
-
-
-def log_object(object, title):
-    "Logs an entire object to the log"
-    logger.info("===START==========================%s" % title.upper())
-    for line in pformat(object).split('\n'):
-        logger.info(line)
-    logger.info("===FINISH=========================%s" % title.upper())
-
-
-def test_imap_auth(user, auth_string):
-    """
-    Authenticates to IMAP with the given auth_string.
-
-    Prints a debug trace of the attempted IMAP connection.
-
-    Args:
-        user: The Gmail username (full email address)
-        auth_string: A valid OAuth2 string, as returned by
-            generate_oath2_string. Must not be base64-encoded,
-            since imaplib does its own base64-encoding.
-    """
-    logger.info("IMAP ================== 0")
-    imap_conn = imaplib.IMAP4_SSL('imap.gmail.com')
-    logger.info("IMAP ================== 1")
-    imap_conn.debug = 4
-    logger.info("IMAP ================== 2")
-    imap_conn.authenticate('XOAUTH2', lambda x: auth_string)
-    logger.info("auth_string: (%s)" % auth_string)
-    logger.info("IMAP ================== 4")
-    try:
-        log_object(imap_conn.list(), 'imap_conn.list()')
-    except:
-        logger.info("list failed")
-    try:
-        messages = imap_conn.select("[Gmail]/Sent Mail")
-        logger.info("MESSAGES: %s" % messages)
-    except:
-        logger.info("SELECT failed")
-    try:
-        typ1, data1 = imap_conn.search(None, 'ALL')
-        logger.info("typ1: %s" % typ1)
-        for num in data1[0].split():
-            typ2, data = imap_conn.fetch(num, '(RFC822)')
-            logger.info("typ2: %s" % typ2)
-            logger.info('Message %s' % num)
-            for line in data[0][1].split('\n'):
-                logger.info('||%s||' % line)
-        imap_conn.close()
-        imap_conn.logout()
-    except:
-        logger.info("FETCH FAILED")
+SEP_MATCHER = re.compile('On \S*, .* wrote:')
 
 
 def _get_accounts_url(command):
@@ -103,9 +34,12 @@ def _get_accounts_url(command):
     return '%s/%s' % (GOOGLE_ACCOUNTS_BASE_URL, command)
 
 
-###############################################
-## Lifted from Google's oauth.py
-###############################################
+def log_object(object, title=''):
+    "Logs an entire object to the log"
+    logger.info("===START==========================%s" % title.upper())
+    for line in pformat(object).split('\n'):
+        logger.info(line)
+    logger.info("===FINISH=========================%s" % title.upper())
 
 
 def _get_auth_token(authorization_code):
@@ -128,76 +62,167 @@ def _get_auth_token(authorization_code):
         urllib.urlopen(request_url, urllib.urlencode(params)).read())
 
 
-def _token_is_current(profile):
-    token_expiration = profile.token_expiration
-    if token_expiration:
-        if token_expiration > django.utils.timezone.now():
-            return True
-    return False
+class Analytics(object):
+
+    def __init__(self, message_string):
+        self.message = email.message_from_string(message_string)
+        self.to = self.message.get('To')
+        logger.info("DATE: (%s)" % self.message["Date"])
+        sent_time = time.mktime(email.utils.parsedate(self.message["Date"]))
+        self.sent = datetime.fromtimestamp(sent_time)
+        self.sent_words = []
+
+    def process_message(self, user):
+        self.sent_text = ''
+        for line in self.message.get_payload().split('\n'):
+            if SEP_MATCHER.findall(line):
+                break
+            self.sent_words += line.split()
+
+        for new_word, count in Counter(self.sent_words).items():
+            try:
+                word_use = WordUse.objects.get(word__exact=new_word)
+            except WordUse.DoesNotExist:
+                word_use = WordUse(word=new_word)
+                word_use.times_used = 0
+
+            word_use.times_used += count
+            word_use.last_time_used = self.sent
+            word_use.last_sent_to = self.to
+            word_use.user = user
+            word_use.save()
 
 
-def _fetch_access_token(user):
-    """
-    We're going to go ask google if we can have a temporary access-token
-    """
-    profile = user.get_profile()
-    code = profile.code
-    if not code:
-        logger.info('User has no code from Google.')
-        return FAIL
-    if _token_is_current(profile):
-        msg = "User has a current access_token. No need to get a new one"
-        logger.info(msg)
+class EmailAnalyzer(object):
+
+    def __init__(self, user):
+        self.user = user
+        self.profile = self.user.get_profile()
+
+    def _process_messages(self, messages):
+        """
+        Go through all the new messages received and do things
+        with them
+        """
+        for message_string in messages:
+            analytics = Analytics(message_string)
+            analytics.process_message(self.user)
+
+    def _fetch_sent_messages(self, auth_string):
+        """
+        Authenticates to IMAP with the given auth_string.
+
+        Prints a debug trace of the attempted IMAP connection.
+
+        Args:
+            auth_string: A valid OAuth2 string, as returned by
+                generate_oath2_string. Must not be base64-encoded,
+                since imaplib does its own base64-encoding.
+        """
+        if os.environ['ENV'] == 'dev':
+            return [TEST_EMAIL1, TEST_EMAIL2]
+        imap_conn = imaplib.IMAP4_SSL('imap.gmail.com')
+        imap_conn.debug = 4
+        imap_conn.authenticate('XOAUTH2', lambda x: auth_string)
+        new_messages = []
+        try:
+            messages = imap_conn.select("[Gmail]/Sent Mail")
+            logger.info("MESSAGES: %s" % messages)
+        except:
+            logger.info("SELECT failed")
+        try:
+            typ1, data1 = imap_conn.search(None, 'ALL')
+            logger.info("typ1: %s" % typ1)
+            for num in data1[0].split():
+                if int(num) < self.profile.last_message_processed:
+                    logger.info("Skipping message we've processed: %s" % num)
+                    continue
+                typ2, data = imap_conn.fetch(num, '(RFC822)')
+                logger.info("typ2: %s" % typ2)
+                logger.info('Message %s' % num)
+                self.profile.last_message_processed = int(num)
+                logger.info("data[0][0]: %s" % data[0][0])
+                new_messages.append(data[0][1])
+                if len(new_messages) > 10:
+                    logger.info('LIMITING NEW MESSAGES TO 10')
+                    break
+            imap_conn.close()
+            imap_conn.logout()
+        except:
+            logger.info("FETCH FAILED")
+        self.profile.save()  # We need to record the message_id we last touched
+        return new_messages
+
+    def _fetch_access_token(self):
+        """
+        We're going to go ask google if we can have a temporary access-token
+        """
+        code = self.profile.code
+        if not code:
+            logger.info('User has no code from Google.')
+            return FAIL
+        if self.profile.token_is_current():
+            msg = "User has a current access_token. No need to get a new one"
+            logger.info(msg)
+            return OK
+
+        server_response = _get_auth_token(code)
+        error = server_response.get("error")
+        if error:
+            logger.info('ERROR RETURNED FROM THE SERVER (%s)' % error)
+            return FAIL
+
+        code = server_response.get('code')
+        access_token = server_response.get('access_token')
+        try:
+            expires_in = int(server_response.get('expires_in'))
+            token_expiration = datetime.fromtimestamp(
+                expires_in + time.time())
+            utc_exp = django.utils.timezone.make_aware(
+                token_expiration, django.utils.timezone.get_default_timezone())
+            logger.info("token_expiration: (%s)" % utc_exp)
+            self.profile.token_expiration = utc_exp
+        except ValueError as exp:
+            expires_in = server_response.get('expires_in')
+            logger.error("Exception: %s" % exp)
+            logger.error("Error converting expiration %s" % expires_in)
+        token_type = server_response.get('token_type')
+        id_token = server_response.get('id_token')
+        self.profile.access_token = access_token
+        self.profile.token_type = token_type
+        self.profile.id_token = id_token
+        self.profile.save()
         return OK
 
-    server_response = _get_auth_token(code)
-    error = server_response.get("error")
-    if error:
-        logger.info('ERROR RETURNED FROM THE SERVER (%s)' % error)
-        return FAIL
+    def _generate_oauth2_string(self, base64_encode=True):
+        """
+        Generates an IMAP OAuth2 authentication string.
 
-    code = server_response.get('code')
-    access_token = server_response.get('access_token')
-    try:
-        expires_in = int(server_response.get('expires_in'))
-        token_expiration = datetime.fromtimestamp(
-            expires_in + time.time())
-        utc_exp = django.utils.timezone.make_aware(
-            token_expiration, django.utils.timezone.get_default_timezone())
-        logger.info("token_expiration: (%s)" % utc_exp)
-        profile.token_expiration = utc_exp
-    except ValueError as exp:
-        expires_in = server_response.get('expires_in')
-        logger.error("Exception: %s" % exp)
-        logger.error("Error converting expiration %s" % expires_in)
-    token_type = server_response.get('token_type')
-    id_token = server_response.get('id_token')
-    profile.access_token = access_token
-    profile.token_type = token_type
-    profile.id_token = id_token
-    profile.save()
-    return OK
+        See https://developers.google.com/google-apps/gmail/oauth2_overview
 
+        Args:
+          username: the username (email address) of the account to authenticate
+          access_token: An OAuth2 access token.
+          base64_encode: Whether to base64-encode the output.
 
-def _get_email(user):
-    """
-    Main method for fetching email from Google
-    """
-    profile = user.get_profile()
-    creds = _generate_oauth2_string(
-        user.email, profile.access_token, base64_encode=False)
+        Returns:
+          The SASL argument for the OAuth2 mechanism.
+        """
+        auth_string = 'user=%s\1auth=Bearer %s\1\1'
+        auth_string %= (self.user.email, self.profile.access_token)
+        if base64_encode:
+            auth_string = base64.b64encode(auth_string)
+        return auth_string
 
-    test_imap_auth(user.email, creds)
-
-    counter = 5
-    while counter:
-        logger.info("fetching email for %s...(%s)" % (user.username, counter))
-        time.sleep(1)
-        counter -= 1
-    return OK
-
-
-def email_fetch(user):
-    if _fetch_access_token(user) == OK:
-        return _get_email(user)
-    return FAIL
+    def process(self):
+        """
+        Main entry point for email processing. Make sure we have rights,
+        grab some emails and process them.
+        """
+        status = FAIL
+        if self._fetch_access_token() == OK:
+            creds = self._generate_oauth2_string(base64_encode=False)
+            new_messages = self._fetch_sent_messages(creds)
+            self._process_messages(new_messages)
+            status = OK
+        return status
