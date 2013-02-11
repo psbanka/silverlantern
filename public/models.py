@@ -8,6 +8,10 @@ logger = logging.getLogger(__name__)
 
 
 class WordUse(models.Model):
+    """
+    Keeps track of the words that the user has already used
+    in their writing
+    """
     user = models.ForeignKey(User)
     word = models.CharField(max_length=100, primary_key=True)
     times_used = models.IntegerField()
@@ -18,7 +22,21 @@ class WordUse(models.Model):
         return "%s used %d times." % (self.word, self.times_used)
 
 
+class WordsToLearn(models.Model):
+    """
+    Keeps track of the words that a person wants to learn to use
+    """
+    user = models.ForeignKey(User)
+    word = models.CharField(max_length=100, primary_key=True)
+    date_added = models.DateTimeField()
+    date_completed = models.DateTimeField(blank=True, null=True)
+
+
 class UserProfile(models.Model):
+    """
+    Keeps track of extra information about the user, specifically
+    credentials for logging into other cloud services.
+    """
     #user = models.ForeignKey(User, unique=True)
     user = models.OneToOneField(User)
     code = models.CharField(max_length=200, blank=True, null=True)
