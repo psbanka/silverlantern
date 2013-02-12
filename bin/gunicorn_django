@@ -1,4 +1,4 @@
-#!/home/bankap/dev/silverlantern/venv/bin/python
+#!/home/peter/dev/silverlantern/bin/python
 # EASY-INSTALL-ENTRY-SCRIPT: 'gunicorn==0.17.2','console_scripts','gunicorn_django'
 __requires__ = 'gunicorn==0.17.2'
 import sys

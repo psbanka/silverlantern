@@ -1,11 +1,91 @@
-{% extends 'base.html' %}
-{% load crispy_forms_tags %}
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01//EN"
+   "http://www.w3.org/TR/html4/strict.dtd">
 
-{% block content %}
-<h1>Welcome to SilverLantern</h1>
-{% if user.is_authenticated %}
-<p>Welcome, {{user.username}}, proceed to your <a href='/accounts/profile/'>dashboard</a> to get started!</p>
-{%else%}
-<p>Please <a href='/login/'>log in</a> to get started!</p>
-{%endif%}
-{% endblock %}
+<html lang="en">
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+   <link href="https://s3.amazonaws.com/silverlantern_static/css/bootstrap.css" rel="stylesheet">
+   <link href="https://s3.amazonaws.com/silverlantern_static/css/bootstrap.css" rel="stylesheet">
+   <link href="https://s3.amazonaws.com/silverlantern_static/css/bootstrap-responsive.css" rel="stylesheet">
+   <link href="https://s3.amazonaws.com/silverlantern_static/css/docs.css" rel="stylesheet">
+   <title>Welcome to Silverlantern</title>
+</head>
+<body data-spy="scroll" data-target=".bs-docs-sidebar">
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script src="https://s3.amazonaws.com/silverlantern_static/js/bootstrap.js"></script>
+  <script src="https://s3.amazonaws.com/silverlantern_static/js/bootstrap-dropdown.js"></script>
+  <script>
+$(function() {
+  // Setup drop down menu
+  $('.dropdown-toggle').dropdown();
+ 
+  // Fix input element click problem
+  $('.dropdown input, .dropdown label').click(function(e) {
+    e.stopPropagation();
+  });
+});
+  </script>
+
+    <!-- Navbar
+    ================================================== -->
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <div class="nav-collapse collapse">
+            <ul class="nav pull-right">
+              <li class="active">
+                <a href="/">Home</a>
+              </li>
+              <li><a href="/users/sign_up">Sign Up</a></li>
+              <li class="divider-vertical"></li>
+              <li class="dropdown">
+              <a class="dropdown-toggle" href="#" data-toggle="dropdown">Sign In <strong class="caret"></strong></a>
+              <div class="dropdown-menu" style="padding: 15px; padding-bottom: 0px;">
+                <form action="/login/" method="post" accept-charset="UTF-8">
+                  {% csrf_token %}
+                  <input name="username" style="margin-bottom: 15px;" type="text" placeholder="username" size="30" />
+                  <input name="password" style="margin-bottom: 15px;" type="password" placeholder="password" size="30" />
+                  <input name="remember_me" style="float: left; margin-right: 10px;" type="checkbox" value="1" />
+                  <label class="string optional" for="remember_me"> Remember me</label>
+                  <input class="btn btn-primary" style="clear: left; width: 100%; height: 32px; font-size: 13px;" type="submit" value="Sign In" />
+                </form>
+              </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<div class="jumbotron masthead">
+  <div class="container">
+    <h1>Silver Lantern</h1>
+    <p>Writing with aplomb</p>
+    <p>
+      <a href="assets/bootstrap.zip" class="btn btn-primary btn-large" onclick="_gaq.push(['_trackEvent', 'Jumbotron actions', 'Download', 'Download 2.3.0']);">Get started now</a>
+    </p>
+    <ul class="masthead-links">
+      <li>
+        <a href="/how-it-works" onclick="_gaq.push(['_trackEvent', 'Jumbotron actions', 'Jumbotron links', 'GitHub project']);">How does it work?</a>
+      </li>
+      <li>
+        <a href="./contact" onclick="_gaq.push(['_trackEvent', 'Jumbotron actions', 'Jumbotron links', 'Examples']);">Contact us</a>
+      </li>
+<!--
+      <li>
+        <a href="./extend.html" onclick="_gaq.push(['_trackEvent', 'Jumbotron actions', 'Jumbotron links', 'Extend']);">Extend</a>
+      </li>
+      <li>
+        Version 2.3.0
+      </li>
+-->
+    </ul>
+  </div>
+</div>
+</body>
+</html>

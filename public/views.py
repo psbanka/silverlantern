@@ -4,7 +4,7 @@ from django.http import HttpResponseRedirect, HttpResponse
 #from django.shortcuts import get_object_or_404
 from django.shortcuts import render
 from contact import ContactForm
-from public.form_word_chooser import WordChooserForm
+#from public.form_word_chooser import WordChooserForm
 from django.shortcuts import render_to_response
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
@@ -13,24 +13,21 @@ import os
 from rq import Queue
 from worker import conn
 
+from django.template import RequestContext
 from public.email_fetch import EmailAnalyzer
 from public.static_data import REDIRECT_URI, TEST_OAUTH_CALLBACK
-from public.models import WordsToLearn
-import django.utils.timezone
+#from public.models import WordsToLearn
+#import django.utils.timezone
 
 # Get an instance of a logger
 logger = logging.getLogger(__name__)
 
 
 def index(request):
-    model = {
-        'user': request.user,
-    }
-    return render_to_response('index.html', model)
-
-    # Example of how to do a nice form:
-    #from forms import MessageForm
-    #return render(request, 'index.html', {'form': MessageForm()})
+    if request.user.is_authenticated():
+        return HttpResponseRedirect('/accounts/profile')
+    return render_to_response(
+        'index.html', {}, context_instance=RequestContext(request))
 
 
 def login_user(request):
@@ -127,25 +124,25 @@ def oauth2callback(request):
     return render_to_response('oauth_results.html', model)
 
 
-@login_required
-def choose_new_word(request):
-    if request.method == 'POST':  # If the form has been submitted...
-        form = WordChooserForm(request.POST)  # A form bound to the POST data
-        if form.is_valid():  # All validation rules pass
-            new_word_to_learn = WordsToLearn(
-                word=form.cleaned_data['new_word'],
-                user=request.user,
-                date_added=django.utils.timezone.now()
-            )
-            new_word_to_learn.save()
-            return HttpResponseRedirect('/accounts/profile/')
-    else:
-        logger.info("GET condition")
-        form = WordChooserForm()  # An unbound form
-
-    return render(request, 'choose_new_word.html', {
-        'form': form,
-    })
+#@login_required
+#def choose_new_word(request):
+#    if request.method == 'POST':  # If the form has been submitted...
+#        form = WordChooserForm(request.POST)  # A form bound to the POST data
+#        if form.is_valid():  # All validation rules pass
+#            new_word_to_learn = WordsToLearn(
+#                word=form.cleaned_data['new_word'],
+#                user=request.user,
+#                date_added=django.utils.timezone.now()
+#            )
+#            new_word_to_learn.save()
+#            return HttpResponseRedirect('/accounts/profile/')
+#    else:
+#        logger.info("GET condition")
+#        form = WordChooserForm()  # An unbound form
+#
+#    return render(request, 'choose_new_word.html', {
+#        'form': form,
+#    })
 
 
 @login_required
