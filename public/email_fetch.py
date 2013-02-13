@@ -149,7 +149,7 @@ class EmailAnalyzer(object):
             logger.info("LIST failed: %s" % exp)
         try:
             messages = imap_conn.select("[Gmail]/Sent Mail")
-            logger.info("MESSAGES: %s" % messages)
+            logger.info("MESSAGES: %s" % str(messages))
         except Exception as exp:
             logger.info("SELECT failed: %s" % exp)
             return []
