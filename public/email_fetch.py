@@ -21,6 +21,23 @@ from pprint import pformat
 logger = logging.getLogger(__name__)
 SEP_MATCHER = re.compile('On \S*, .* wrote:')
 
+PUNCTUATION = [
+    "'", ",", ".", "(", ")", ";", '"', "!", "-", "[",
+    "]", "{", "}", "?", "/"
+]
+
+
+def cleanup(word):
+    """
+    We have been given a word with potentially a bunch of punctuation
+    and stuff around it. Let's clean it up.
+    """
+    if word[0] in PUNCTUATION:
+        word = word[1:]
+    if word[-1] in PUNCTUATION:
+        word = word[:-1]
+    return word
+
 
 def _get_accounts_url(command):
     """Generates the Google Accounts URL.
@@ -81,7 +98,7 @@ class Analytics(object):
 
         for new_word, count in Counter(self.sent_words).items():
             try:
-                word_use = WordUse.objects.get(word__exact=new_word)
+                word_use = WordUse.objects.get(word__exact=cleanup(new_word))
             except WordUse.DoesNotExist:
                 word_use = WordUse(word=new_word)
                 word_use.times_used = 0
@@ -133,6 +150,11 @@ class EmailAnalyzer(object):
         try:
             typ1, data1 = imap_conn.search(None, 'ALL')
             logger.info("typ1: %s" % typ1)
+            try:
+                logger.info("zeroth message: %s" % int(typ1.split([0])))
+                logger.info("last message: %s" % int(typ1.split([0])))
+            except ValueError as exp:
+                logger.error("Error examining messages (%s)" % exp)
             for num in data1[0].split():
                 if int(num) < self.profile.last_message_processed:
                     logger.info("Skipping message we've processed: %s" % num)
@@ -144,7 +166,7 @@ class EmailAnalyzer(object):
                 logger.info("data[0][0]: %s" % data[0][0])
                 new_messages.append(data[0][1])
                 if len(new_messages) > 10:
-                    logger.info('LIMITING NEW MESSAGES TO 10')
+                    logger.info('LIMITING NEW MESSAGES TO 100')
                     break
             imap_conn.close()
             imap_conn.logout()
