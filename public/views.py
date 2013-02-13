@@ -80,7 +80,7 @@ def profile(request):
     current = profile.last_message_processed
     final = profile.last_message_on_server
     if (current and final):
-        percent_imported = 100.0 * (float(final - current) / float(final))
+        percent_imported = 100.0 * (float(current) / float(final))
     model = {
         'user': request.user,
         'ready_to_import': ready_to_import,

@@ -55,9 +55,8 @@ def cleanup(new_word):
             try:
                 Word.objects.get(word__exact=new_word)
             except Word.DoesNotExist:
-                logger.info("This is NOT a dictionary word")
+                logger.info("(%s) is NOT a dictionary word" % new_word)
                 return ''
-    logger.info("cleaned/proper-cased word: %s" % new_word)
     return new_word
 
 
@@ -195,8 +194,8 @@ class EmailAnalyzer(object):
                 self.profile.last_message_processed = int(num)
                 #logger.info("data[0][0]: %s" % data[0][0])
                 new_messages.append(data[0][1])
-                if len(new_messages) > 20:
-                    logger.info('LIMITING NEW MESSAGES TO 20')
+                if len(new_messages) > 200:
+                    logger.info('LIMITING NEW MESSAGES TO 200')
                     break
             imap_conn.close()
             imap_conn.logout()
