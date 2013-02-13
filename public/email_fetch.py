@@ -15,7 +15,7 @@ from datetime import datetime
 from public.static_data import REDIRECT_URI, GOOGLE_ACCOUNTS_BASE_URL
 from public.static_data import TEST_GOOGLE_REPLY, OK, FAIL
 from public.static_data import TEST_EMAIL1, TEST_EMAIL2
-from public.models import WordUse
+from public.models import WordUse, Word
 
 import django.utils.timezone
 from pprint import pformat
@@ -46,6 +46,20 @@ def cleanup(word):
     if any([letter in DISQUALIFIERS for letter in word]):
         return ''
     logger.info("Cleaned word: %s" % word)
+    try:
+        word = Word.objects.get(word__exact=word)
+        logger.info("THIS IS A DICTIONARY WORD!")
+    except Word.DoesNotExist:
+        word = word.lower()
+        try:
+            word = word.objects.get(word__exact=word)
+        except Word.DoesNotExist:
+            word = word.capitalize()
+            try:
+                word = word.objects.get(word__exact=word)
+            except Word.DoesNotExist:
+                logger.info("This is NOT a dictionary word")
+    logger.info("proper-cased word: %s" % word)
     return word
 
 
