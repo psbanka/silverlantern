@@ -33,8 +33,6 @@ def cleanup(word):
     """
     logger.info("Incoming word: %s" % word)
     found = True
-    if any([letter in DISQUALIFIERS for letter in word]):
-        return ''
     while found and word:
         found = False
         if word[0] in string.punctuation:
@@ -45,6 +43,8 @@ def cleanup(word):
         if word[-1] in string.punctuation:
             word = word[:-1]
             found = True
+    if any([letter in DISQUALIFIERS for letter in word]):
+        return ''
     logger.info("Cleaned word: %s" % word)
     return word
 
@@ -159,11 +159,11 @@ class EmailAnalyzer(object):
         #imap_conn.debug = 4
         imap_conn.authenticate('XOAUTH2', lambda x: auth_string)
         new_messages = []
-        try:
-            list_output = imap_conn.list()
-            log_object(list_output, 'LIST OUTPUT')
-        except Exception as exp:
-            logger.info("LIST failed: %s" % exp)
+        #try:
+        #    list_output = imap_conn.list()
+        #    log_object(list_output, 'LIST OUTPUT')
+        #except Exception as exp:
+        #    logger.info("LIST failed: %s" % exp)
 
         status, msg_data = imap_conn.select("[Gmail]/Sent Mail")
         try:
@@ -174,7 +174,6 @@ class EmailAnalyzer(object):
         try:
             _result, message_data = imap_conn.search(None, 'ALL')
             message_numbers = message_data[0]
-            log_object(message_numbers, "Message numbers")
             for num in message_numbers.split():
                 if int(num) < self.profile.last_message_processed:
                     logger.info("Skipping message we've processed: %s" % num)
@@ -182,7 +181,7 @@ class EmailAnalyzer(object):
                 _result, data = imap_conn.fetch(num, '(RFC822)')
                 logger.info('Message %s' % num)
                 self.profile.last_message_processed = int(num)
-                logger.info("data[0][0]: %s" % data[0][0])
+                #logger.info("data[0][0]: %s" % data[0][0])
                 new_messages.append(data[0][1])
                 if len(new_messages) > 20:
                     logger.info('LIMITING NEW MESSAGES TO 20')
