@@ -86,6 +86,8 @@ def fetch_my_mail(request):
     This is going to use our google credentials to go fetch all our mail!
     """
     q = Queue(connection=conn)
+    if not request.user.email:
+        return HttpResponse("User must have email defined.")
     logger.info("Queuing job in EmailAnalyzer")
     email_analyzer = EmailAnalyzer(request.user)
     q.enqueue(email_analyzer.process)
@@ -109,7 +111,9 @@ def oauth2callback(request):
         profile = request.user.get_profile()
         profile.code = code
         profile.save()
-        q = Queue(connection=conn)
+        if not request.user.email:
+            return HttpResponse("User must have email defined.")
+            q = Queue(connection=conn)
         email_analyzer = EmailAnalyzer(request.user)
         q.enqueue(email_analyzer.process)
         model['message'] = "Fetching email..."

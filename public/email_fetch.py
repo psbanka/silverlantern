@@ -8,6 +8,8 @@ import imaplib
 import email
 import re
 from collections import Counter
+import traceback
+import StringIO
 
 from datetime import datetime
 from public.static_data import REDIRECT_URI, GOOGLE_ACCOUNTS_BASE_URL
@@ -180,7 +182,10 @@ class EmailAnalyzer(object):
             imap_conn.close()
             imap_conn.logout()
         except Exception as exp:
-            logger.info("FETCH FAILED: %s" % exp)
+            fp = StringIO.StringIO()
+            traceback.print_exc(file=fp)
+            for line in fp.getvalue().split('\n'):
+                logger.error("%% %s" % line)
         self.profile.save()  # We need to record the message_id we last touched
         return new_messages
 
