@@ -37,6 +37,8 @@ def cleanup(word):
     logger.info("Incoming word: %s" % word)
     if word[0] in PUNCTUATION:
         word = word[1:]
+    if len(word) == 0:
+        return ''
     if word[-1] in PUNCTUATION:
         word = word[:-1]
     logger.info("Cleaned word: %s" % word)
@@ -101,8 +103,11 @@ class Analytics(object):
             self.sent_words += line.split()
 
         for new_word, count in Counter(self.sent_words).items():
+            new_word = cleanup(new_word)
+            if not new_word:
+                continue
             try:
-                word_use = WordUse.objects.get(word__exact=cleanup(new_word))
+                word_use = WordUse.objects.get(word__exact=new_word)
             except WordUse.DoesNotExist:
                 word_use = WordUse(word=new_word)
                 word_use.times_used = 0
