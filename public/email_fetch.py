@@ -26,41 +26,41 @@ SEP_MATCHER = re.compile('On \S*, .* wrote:')
 DISQUALIFIERS = string.digits + '`~!@#$%^&*()_=+{[}]\|";:<,.>/?'
 
 
-def cleanup(word):
+def cleanup(new_word):
     """
     We have been given a word with potentially a bunch of punctuation
     and stuff around it. Let's clean it up.
     """
-    logger.info("Incoming word: %s" % word)
+    logger.info("Incoming word: %s" % new_word)
     found = True
-    while found and word:
+    while found and new_word:
         found = False
-        if word[0] in string.punctuation:
-            word = word[1:]
+        if new_word[0] in string.punctuation:
+            new_word = new_word[1:]
             found = True
-        if len(word) == 0:
+        if len(new_word) == 0:
             break
-        if word[-1] in string.punctuation:
-            word = word[:-1]
+        if new_word[-1] in string.punctuation:
+            new_word = new_word[:-1]
             found = True
-    if any([letter in DISQUALIFIERS for letter in word]):
+    if any([letter in DISQUALIFIERS for letter in new_word]):
         return ''
-    logger.info("Cleaned word: %s" % word)
+    logger.info("Cleaned word: %s" % new_word)
     try:
-        word = Word.objects.get(word__exact=word)
+        Word.objects.get(word__exact=new_word)
         logger.info("THIS IS A DICTIONARY WORD!")
     except Word.DoesNotExist:
-        word = word.lower()
+        new_word = new_word.lower()
         try:
-            word = word.objects.get(word__exact=word)
+            Word.objects.get(word__exact=new_word)
         except Word.DoesNotExist:
-            word = word.capitalize()
+            new_word = new_word.capitalize()
             try:
-                word = word.objects.get(word__exact=word)
+                Word.objects.get(word__exact=new_word)
             except Word.DoesNotExist:
                 logger.info("This is NOT a dictionary word")
-    logger.info("proper-cased word: %s" % word)
-    return word
+    logger.info("proper-cased word: %s" % new_word)
+    return new_word
 
 
 def _get_accounts_url(command):
