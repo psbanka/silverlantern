@@ -159,6 +159,7 @@ class EmailAnalyzer(object):
         try:
             _result, message_data = imap_conn.search(None, 'ALL')
             message_numbers = message_data[0]
+            log_object(message_numbers, "Message numbers")
             try:
                 logger.info("first message: %s" % int(message_data.split([0])))
                 logger.info("last message: %s" % int(message_data.split([-1])))
