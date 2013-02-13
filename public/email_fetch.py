@@ -115,6 +115,7 @@ class EmailAnalyzer(object):
     def __init__(self, user):
         self.user = user
         self.profile = self.user.get_profile()
+        logger.info("Initializing EmailAnalyzer")
 
     def _process_messages(self, messages):
         """
@@ -247,4 +248,6 @@ class EmailAnalyzer(object):
             new_messages = self._fetch_sent_messages(creds)
             self._process_messages(new_messages)
             status = OK
+        else:
+            logger.error("Unable to fetch access token. Aborting import")
         return status

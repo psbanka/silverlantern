@@ -86,6 +86,7 @@ def fetch_my_mail(request):
     This is going to use our google credentials to go fetch all our mail!
     """
     q = Queue(connection=conn)
+    logger.info("Queuing job in EmailAnalyzer")
     email_analyzer = EmailAnalyzer(request.user)
     q.enqueue(email_analyzer.process)
     return HttpResponse("Job queued.")
