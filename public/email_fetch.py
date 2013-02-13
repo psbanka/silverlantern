@@ -143,7 +143,7 @@ class EmailAnalyzer(object):
         if os.environ['ENV'] == 'dev':
             return [TEST_EMAIL1, TEST_EMAIL2]
         imap_conn = imaplib.IMAP4_SSL('imap.gmail.com')
-        imap_conn.debug = 4
+        #imap_conn.debug = 4
         imap_conn.authenticate('XOAUTH2', lambda x: auth_string)
         new_messages = []
         try:
@@ -162,11 +162,6 @@ class EmailAnalyzer(object):
             _result, message_data = imap_conn.search(None, 'ALL')
             message_numbers = message_data[0]
             log_object(message_numbers, "Message numbers")
-            try:
-                logger.info("first message: %s" % int(message_data.split([0])))
-                logger.info("last message: %s" % int(message_data.split([-1])))
-            except ValueError as exp:
-                logger.error("Error examining messages (%s)" % exp)
             for num in message_numbers.split():
                 if int(num) < self.profile.last_message_processed:
                     logger.info("Skipping message we've processed: %s" % num)
