@@ -72,9 +72,21 @@ def profile(request):
             "redirect_uri=%s&response_type=code&client_id=%s"
         url %= (scope, REDIRECT_URI, client_id)
 
+    ready_to_import = False
+    profile = request.user.get_profile()
+    if (request.user.email and profile.code):
+        ready_to_import = True
+    percent_imported = 0.0
+    current = profile.last_message_processed
+    final = profile.last_message_on_server
+    if (current and final):
+        percent_imported = float(final - current) / float(final)
     model = {
         'user': request.user,
-        'profile': request.user.get_profile(),
+        'ready_to_import': ready_to_import,
+        'percent_imported': percent_imported,
+        'title': "Profile for %s" % request.user.first_name,
+        'page_name': "Profile",
         'google_auth_url': url,
     }
     return render_to_response('profile.html', model)
