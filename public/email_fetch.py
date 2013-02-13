@@ -143,10 +143,15 @@ class EmailAnalyzer(object):
         imap_conn.authenticate('XOAUTH2', lambda x: auth_string)
         new_messages = []
         try:
+            list_output = imap_conn.list()
+            log_object(list_output, 'LIST OUTPUT')
+        except Exception as exp:
+            logger.info("LIST failed: %s" % exp)
+        try:
             messages = imap_conn.select("[Gmail]/Sent Mail")
             logger.info("MESSAGES: %s" % messages)
-        except:
-            logger.info("SELECT failed")
+        except Exception as exp:
+            logger.info("SELECT failed: %s" % exp)
             return []
         try:
             _result, message_data = imap_conn.search(None, 'ALL')
