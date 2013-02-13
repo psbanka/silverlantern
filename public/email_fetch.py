@@ -104,7 +104,7 @@ class Analytics(object):
         payload = self.message.get_payload()
         if isinstance(payload, list):
             log_object(payload, "PAYLOAD OBJECT")
-            continue
+            return
         for line in self.message.get_payload().split('\n'):
             if SEP_MATCHER.findall(line):
                 break
