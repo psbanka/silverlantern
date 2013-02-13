@@ -53,7 +53,7 @@ class UserProfile(models.Model):
     token_type = models.CharField(max_length=20, blank=True, null=True)
     id_token = models.CharField(max_length=1000, blank=True, null=True)
     last_message_processed = models.IntegerField(blank=True, null=True)
-    latst_message_on_server = models.IntegerField(blank=True, null=True)
+    last_message_on_server = models.IntegerField(blank=True, null=True)
 
     def token_is_current(self):
         token_expiration = self.token_expiration
