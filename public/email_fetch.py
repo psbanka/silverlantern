@@ -31,7 +31,6 @@ def cleanup(new_word):
     We have been given a word with potentially a bunch of punctuation
     and stuff around it. Let's clean it up.
     """
-    logger.info("Incoming word: %s" % new_word)
     found = True
     while found and new_word:
         found = False
@@ -45,10 +44,8 @@ def cleanup(new_word):
             found = True
     if any([letter in DISQUALIFIERS for letter in new_word]):
         return ''
-    logger.info("Cleaned word: %s" % new_word)
     try:
         Word.objects.get(word__exact=new_word)
-        logger.info("THIS IS A DICTIONARY WORD!")
     except Word.DoesNotExist:
         new_word = new_word.lower()
         try:
@@ -59,7 +56,8 @@ def cleanup(new_word):
                 Word.objects.get(word__exact=new_word)
             except Word.DoesNotExist:
                 logger.info("This is NOT a dictionary word")
-    logger.info("proper-cased word: %s" % new_word)
+                return ''
+    logger.info("cleaned/proper-cased word: %s" % new_word)
     return new_word
 
 

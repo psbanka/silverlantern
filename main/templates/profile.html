@@ -36,7 +36,7 @@
     <table class="well table table-striped table-bordered">
         <tbody>
         <tr><td class="span2">Ready to import?</td><td>{% if ready_to_import %}<i class="icon-ok"></i>{%else%}<i class="icon-warning-sign"></i>{% endif %}</td></tr>
-        <tr><td class="span2">Percent imported</td><td><div class="progress"><div class="bar" style="width: 60%;"></div></div></td></tr>
+        <tr><td class="span2">Percent imported</td><td><div class="progress"><div class="bar" style="width: {{percent_imported}}%;"></div></div></td></tr>
         </tbody>
     </table>
 {% endblock %}
