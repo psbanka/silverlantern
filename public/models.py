@@ -7,6 +7,14 @@ import django.utils.timezone
 logger = logging.getLogger(__name__)
 
 
+class Word(models.Model):
+    """
+    Our basic word database. We keep track of all our English words
+    here, as well possibly, as other interesting features.
+    """
+    word = models.CharField(max_length=100, primary_key=True)
+
+
 class WordUse(models.Model):
     """
     Keeps track of the words that the user has already used
