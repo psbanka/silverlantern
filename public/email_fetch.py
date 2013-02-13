@@ -105,7 +105,7 @@ class Analytics(object):
         if isinstance(payload, list):
             log_object(payload, "PAYLOAD OBJECT")
             return
-        for line in self.message.get_payload().split('\n'):
+        for line in payload.split('\n'):
             if SEP_MATCHER.findall(line):
                 break
             self.sent_words += line.split()
