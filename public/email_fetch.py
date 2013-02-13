@@ -141,6 +141,7 @@ class EmailAnalyzer(object):
             return [TEST_EMAIL1, TEST_EMAIL2]
         imap_conn = imaplib.IMAP4_SSL('imap.gmail.com')
         imap_conn.debug = 4
+        logger.info("Sending auth string: %s" % auth_string)
         imap_conn.authenticate('XOAUTH2', lambda x: auth_string)
         new_messages = []
         try:
@@ -231,6 +232,7 @@ class EmailAnalyzer(object):
         Returns:
           The SASL argument for the OAuth2 mechanism.
         """
+        logger.info("concatenate: %s with %s" % (self.user.email, self.profile.access_token))
         auth_string = 'user=%s\1auth=Bearer %s\1\1'
         auth_string %= (self.user.email, self.profile.access_token)
         if base64_encode:
