@@ -23,10 +23,7 @@ from pprint import pformat
 logger = logging.getLogger(__name__)
 SEP_MATCHER = re.compile('On \S*, .* wrote:')
 
-PUNCTUATION = [
-    "'", ",", ".", "(", ")", ";", '"', "!", "-", "[",
-    "]", "{", "}", "?", "/"
-]
+import string
 
 
 def cleanup(word):
@@ -35,12 +32,19 @@ def cleanup(word):
     and stuff around it. Let's clean it up.
     """
     logger.info("Incoming word: %s" % word)
-    if word[0] in PUNCTUATION:
-        word = word[1:]
-    if len(word) == 0:
+    found = True
+    if any([letter in string.digits for letter in word]):
         return ''
-    if word[-1] in PUNCTUATION:
-        word = word[:-1]
+    while found and word:
+        found = False
+        if word[0] in string.punctuation:
+            word = word[1:]
+            found = True
+        if len(word) == 0:
+            break
+        if word[-1] in string.punctuation:
+            word = word[:-1]
+            found = True
     logger.info("Cleaned word: %s" % word)
     return word
 
