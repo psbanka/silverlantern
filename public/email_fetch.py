@@ -19,11 +19,11 @@ from public.models import WordUse
 
 import django.utils.timezone
 from pprint import pformat
+import string
 
 logger = logging.getLogger(__name__)
 SEP_MATCHER = re.compile('On \S*, .* wrote:')
-
-import string
+DISQUALIFIERS = string.digits + '`~!@#$%^&*()_=+{[}]\|";:<,.>/?'
 
 
 def cleanup(word):
@@ -33,7 +33,7 @@ def cleanup(word):
     """
     logger.info("Incoming word: %s" % word)
     found = True
-    if any([letter in string.digits for letter in word]):
+    if any([letter in DISQUALIFIERS for letter in word]):
         return ''
     while found and word:
         found = False
@@ -101,6 +101,10 @@ class Analytics(object):
 
     def process_message(self, user):
         self.sent_text = ''
+        payload = self.message.get_payload()
+        if isinstance(payload, list):
+            log_object(payload, "PAYLOAD OBJECT")
+            continue
         for line in self.message.get_payload().split('\n'):
             if SEP_MATCHER.findall(line):
                 break
