@@ -32,10 +32,12 @@ def cleanup(word):
     We have been given a word with potentially a bunch of punctuation
     and stuff around it. Let's clean it up.
     """
+    logger.info("Incoming word: %s" % word)
     if word[0] in PUNCTUATION:
         word = word[1:]
     if word[-1] in PUNCTUATION:
         word = word[:-1]
+    logger.info("Cleaned word: %s" % word)
     return word
 
 
@@ -147,11 +149,12 @@ class EmailAnalyzer(object):
             log_object(list_output, 'LIST OUTPUT')
         except Exception as exp:
             logger.info("LIST failed: %s" % exp)
+
+        status, msg_data = imap_conn.select("[Gmail]/Sent Mail")
         try:
-            messages = imap_conn.select("[Gmail]/Sent Mail")
-            logger.info("MESSAGES: %s" % str(messages))
+            self.profile.last_message_on_server = int(msg_data[0])
         except Exception as exp:
-            logger.info("SELECT failed: %s" % exp)
+            logger.info("Unable to determine final message: %s" % exp)
             return []
         try:
             _result, message_data = imap_conn.search(None, 'ALL')
@@ -161,23 +164,22 @@ class EmailAnalyzer(object):
                 logger.info("last message: %s" % int(message_data.split([-1])))
             except ValueError as exp:
                 logger.error("Error examining messages (%s)" % exp)
-            for num in message_numbers[0].split():
+            for num in message_numbers.split():
                 if int(num) < self.profile.last_message_processed:
                     logger.info("Skipping message we've processed: %s" % num)
                     continue
-                typ2, data = imap_conn.fetch(num, '(RFC822)')
-                logger.info("typ2: %s" % typ2)
+                _result, data = imap_conn.fetch(num, '(RFC822)')
                 logger.info('Message %s' % num)
                 self.profile.last_message_processed = int(num)
                 logger.info("data[0][0]: %s" % data[0][0])
                 new_messages.append(data[0][1])
-                if len(new_messages) > 10:
-                    logger.info('LIMITING NEW MESSAGES TO 100')
+                if len(new_messages) > 20:
+                    logger.info('LIMITING NEW MESSAGES TO 20')
                     break
             imap_conn.close()
             imap_conn.logout()
-        except:
-            logger.info("FETCH FAILED")
+        except Exception as exp:
+            logger.info("FETCH FAILED: %s" % exp)
         self.profile.save()  # We need to record the message_id we last touched
         return new_messages
 
