@@ -115,7 +115,6 @@ class EmailAnalyzer(object):
     def __init__(self, user):
         self.user = user
         self.profile = self.user.get_profile()
-        logger.info("Initializing EmailAnalyzer")
 
     def _process_messages(self, messages):
         """
@@ -141,7 +140,6 @@ class EmailAnalyzer(object):
             return [TEST_EMAIL1, TEST_EMAIL2]
         imap_conn = imaplib.IMAP4_SSL('imap.gmail.com')
         imap_conn.debug = 4
-        logger.info("Sending auth string: %s" % auth_string)
         imap_conn.authenticate('XOAUTH2', lambda x: auth_string)
         new_messages = []
         try:
@@ -149,15 +147,16 @@ class EmailAnalyzer(object):
             logger.info("MESSAGES: %s" % messages)
         except:
             logger.info("SELECT failed")
+            return []
         try:
-            typ1, data1 = imap_conn.search(None, 'ALL')
-            logger.info("typ1: %s" % typ1)
+            _result, message_data = imap_conn.search(None, 'ALL')
+            message_numbers = message_data[0]
             try:
-                logger.info("zeroth message: %s" % int(typ1.split([0])))
-                logger.info("last message: %s" % int(typ1.split([0])))
+                logger.info("first message: %s" % int(message_data.split([0])))
+                logger.info("last message: %s" % int(message_data.split([-1])))
             except ValueError as exp:
                 logger.error("Error examining messages (%s)" % exp)
-            for num in data1[0].split():
+            for num in message_numbers[0].split():
                 if int(num) < self.profile.last_message_processed:
                     logger.info("Skipping message we've processed: %s" % num)
                     continue
@@ -232,7 +231,6 @@ class EmailAnalyzer(object):
         Returns:
           The SASL argument for the OAuth2 mechanism.
         """
-        logger.info("concatenate: %s with %s" % (self.user.email, self.profile.access_token))
         auth_string = 'user=%s\1auth=Bearer %s\1\1'
         auth_string %= (self.user.email, self.profile.access_token)
         if base64_encode:
