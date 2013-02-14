@@ -26,6 +26,7 @@ from worker import conn
 logger = logging.getLogger(__name__)
 SEP_MATCHER = re.compile('On \S*, .* wrote:')
 DISQUALIFIERS = string.digits + '`~!@#$%^&*()_=+{[}]\|";:<,.>/?'
+MAX_TO_PROCESS = 10
 
 
 def cleanup(new_word):
@@ -113,12 +114,10 @@ class Analytics(object):
         self.sent = datetime.fromtimestamp(sent_time)
         self.sent_words = []
 
-    def process_message(self, user):
-        self.sent_text = ''
-        payload = self.message.get_payload()
-        if isinstance(payload, list):
-            log_object(payload, "PAYLOAD OBJECT")
-            return
+    def _process_payload(self, payload):
+        """
+        We have a payload come in and we need to pull words out of it.
+        """
         for line in payload.split('\n'):
             if SEP_MATCHER.findall(line):
                 break
@@ -137,7 +136,7 @@ class Analytics(object):
             word_use.times_used += count
             word_use.last_time_used = self.sent
             word_use.last_sent_to = self.to
-            word_use.user = user
+            word_use.user = self.user
             word_use.save()
             try:
                 word_to_learn = WordsToLearn.objects.get(
@@ -146,6 +145,16 @@ class Analytics(object):
                 logger.info("Marking success on word used: %s!" % new_word)
             except WordsToLearn.DoesNotExist:
                 pass
+
+    def process_message(self):
+        self.sent_text = ''
+        payload = self.message.get_payload()
+        if isinstance(payload, list):
+            for hunk in payload:
+                log_object(hunk, "PAYLOAD hunk")
+                self._process_payload(hunk)
+        else:
+            self._process_payload(payload)
 
 
 class EmailAnalyzer(object):
@@ -198,12 +207,13 @@ class EmailAnalyzer(object):
                 _result, data = imap_conn.fetch(num, '(RFC822)')
                 logger.info('Message %s' % num)
                 self.profile.last_message_processed = int(num)
+                self.profile.save()
                 message_string = data[0][1]
                 analytics = Analytics(self.user, message_string)
-                analytics.process_message(self.user)
+                analytics.process_message()
                 message_count += 1
-                if message_count > 200:
-                    logger.info('LIMITING NEW MESSAGES TO 200')
+                if message_count > MAX_TO_PROCESS:
+                    logger.info('LIMITING NEW MESSAGES TO %s' % MAX_TO_PROCESS)
                     status = YIELD
                     break
             imap_conn.close()
