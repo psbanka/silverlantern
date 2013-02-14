@@ -20,7 +20,6 @@ from public.models import WordUse, Word, WordsToLearn
 
 import django.utils.timezone
 from django.db import transaction
-import django.db.utils.DatabaseError
 from pprint import pformat
 import string
 from worker import conn
@@ -149,13 +148,6 @@ class Analytics(object):
                 word_use.save()
             except Exception as exp:
                 logger.info("EXCEPTION THROWN: %s" % type(exp))
-                msg = "Unable to save word: (%s) due to: (%s)"
-                msg %= (new_word, exp)
-                logger.error(msg)
-                transaction.rollback()
-                continue
-            except django.db.utils.DatabaseError as exp:
-                logger.info("django.db.utils.DatabaseError: %s" % type(exp))
                 msg = "Unable to save word: (%s) due to: (%s)"
                 msg %= (new_word, exp)
                 logger.error(msg)
