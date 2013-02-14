@@ -105,9 +105,9 @@ def _get_auth_token(authorization_code):
 
 class Analytics(object):
 
-    def __init__(self, user, message_string):
+    def __init__(self, user, message):
         self.user = user
-        self.message = email.message_from_string(message_string)
+        self.message = message
         self.to = self.message.get('To')
         logger.info("DATE: (%s)" % self.message["Date"])
         sent_time = time.mktime(email.utils.parsedate(self.message["Date"]))
@@ -150,9 +150,13 @@ class Analytics(object):
         self.sent_text = ''
         payload = self.message.get_payload()
         if isinstance(payload, list):
-            for hunk in payload:
-                log_object(hunk, "PAYLOAD hunk")
-                self._process_payload(hunk)
+            for message in payload:
+                if isinstance(message, email.message.Message):
+                    analytics = Analytics(self.user, message)
+                    analytics.process_message()
+                else:
+                    log_object(message, "PAYLOAD message")
+                    self._process_payload(message)
         else:
             self._process_payload(payload)
 
@@ -209,7 +213,8 @@ class EmailAnalyzer(object):
                 self.profile.last_message_processed = int(num)
                 self.profile.save()
                 message_string = data[0][1]
-                analytics = Analytics(self.user, message_string)
+                message = email.message_from_string(message_string)
+                analytics = Analytics(self.user, message)
                 analytics.process_message()
                 message_count += 1
                 if message_count > MAX_TO_PROCESS:
