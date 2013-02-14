@@ -111,6 +111,8 @@ class Analytics(object):
         self.to = to
         if not self.to:
             self.to = self.message.get('To')
+            if not self.to:
+                self.to = "UNKNOWN"
         self.sent = sent
         if not self.sent:
             sent_time = time.mktime(
