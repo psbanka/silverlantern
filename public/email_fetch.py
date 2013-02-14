@@ -104,7 +104,8 @@ def _get_auth_token(authorization_code):
 
 class Analytics(object):
 
-    def __init__(self, message_string):
+    def __init__(self, user, message_string):
+        self.user = user
         self.message = email.message_from_string(message_string)
         self.to = self.message.get('To')
         logger.info("DATE: (%s)" % self.message["Date"])
@@ -198,7 +199,7 @@ class EmailAnalyzer(object):
                 logger.info('Message %s' % num)
                 self.profile.last_message_processed = int(num)
                 message_string = data[0][1]
-                analytics = Analytics(message_string)
+                analytics = Analytics(self.user, message_string)
                 analytics.process_message(self.user)
                 message_count += 1
                 if message_count > 200:
@@ -284,8 +285,7 @@ class EmailAnalyzer(object):
         status = FAIL
         if self._fetch_access_token() == OK:
             creds = self._generate_oauth2_string(base64_encode=False)
-            new_messages = self._fetch_sent_messages(creds)
-            status = self._process_messages(new_messages)
+            status = self._fetch_sent_messages(creds)
         else:
             logger.error("Unable to fetch access token. Aborting import")
         if status == YIELD:
