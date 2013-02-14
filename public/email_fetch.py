@@ -105,13 +105,17 @@ def _get_auth_token(authorization_code):
 
 class Analytics(object):
 
-    def __init__(self, user, message):
+    def __init__(self, user, message, to=None, sent=None):
         self.user = user
         self.message = message
-        self.to = self.message.get('To')
-        logger.info("DATE: (%s)" % self.message["Date"])
-        sent_time = time.mktime(email.utils.parsedate(self.message["Date"]))
-        self.sent = datetime.fromtimestamp(sent_time)
+        self.to = to
+        if not self.to:
+            self.to = self.message.get('To')
+        self.sent = sent
+        if not self.sent:
+            sent_time = time.mktime(
+                email.utils.parsedate(self.message["Date"]))
+            self.sent = datetime.fromtimestamp(sent_time)
         self.sent_words = []
 
     def _process_payload(self, payload):
@@ -152,7 +156,8 @@ class Analytics(object):
         if isinstance(payload, list):
             for message in payload:
                 if isinstance(message, email.message.Message):
-                    analytics = Analytics(self.user, message)
+                    analytics = Analytics(
+                        self.user, message, to=self.to, sent=self.sent)
                     analytics.process_message()
                 else:
                     log_object(message, "PAYLOAD message")
