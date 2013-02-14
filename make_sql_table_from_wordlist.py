@@ -15,15 +15,18 @@ import gzip
 
 
 def main():
+    counter = 0
     if 1 == 1:
     #with open("public/sql/words.sql", 'w') as output_file:
         with gzip.open("en-common.wl.gz", 'rb') as input_file:
             input_line = "START"
             while input_line:
+                counter += 1
                 input_line = input_file.readline().strip()
                 if "'" in input_line:
                     input_line = input_line.replace("'", "''")
-                print ">>", input_line
+                if counter % 100 == 0:
+                    print ">>", input_line
                 new_word = Word(word=input_line)
                 new_word.save()
                 #output_file.write(LINE_TEMPLATE % input_line)

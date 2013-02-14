@@ -21,7 +21,8 @@ class WordUse(models.Model):
     in their writing
     """
     user = models.ForeignKey(User)
-    word = models.CharField(max_length=100, primary_key=True)
+    #word = models.CharField(max_length=100, primary_key=True)
+    word = models.ForeignKey(Word)
     times_used = models.IntegerField()
     last_time_used = models.DateTimeField()
     last_sent_to = models.CharField(max_length=100)
@@ -35,8 +36,8 @@ class WordsToLearn(models.Model):
     Keeps track of the words that a person wants to learn to use
     """
     user = models.ForeignKey(User)
-    word = models.CharField(max_length=100, primary_key=True)
-    #word = models.ForeignKey(Word) # TODO
+    #word = models.CharField(max_length=100, primary_key=True)
+    word = models.ForeignKey(Word)
     date_added = models.DateTimeField()
     date_completed = models.DateTimeField(blank=True, null=True)
 
