@@ -145,7 +145,8 @@ class Analytics(object):
             word_use.user = self.user
             try:
                 word_use.save()
-            except WordUse.DatabaseError as exp:
+            except Exception as exp:
+                logger.info("EXCEPTION THROWN: %s" % type(exp))
                 msg = "Unable to save word: (%s) due to: (%s)"
                 msg %= (new_word, exp)
                 logger.error(msg)
