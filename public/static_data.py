@@ -4,6 +4,7 @@ REDIRECT_URI = 'http://www.silverlantern.net/oauth2callback'
 
 FAIL = 1
 OK = 0
+YIELD = 2
 
 TEST_OAUTH_CALLBACK = '/oauth2callback/?code=4/eQo7VL5ZqudITMqpjXn03aXRAdEs.Uso5fqMgKTwQuJJVnL49Cc_EqBqKeQI'
 

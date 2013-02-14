@@ -36,6 +36,7 @@ class WordsToLearn(models.Model):
     """
     user = models.ForeignKey(User)
     word = models.CharField(max_length=100, primary_key=True)
+    #word = models.ForeignKey(Word) # TODO
     date_added = models.DateTimeField()
     date_completed = models.DateTimeField(blank=True, null=True)
 

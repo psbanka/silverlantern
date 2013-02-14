@@ -1,0 +1,22 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+    {% if learning_list %}
+    <div class="well">
+    <h3>Current words</h3>
+    <table class="well table table-condensed table-striped table-bordered">
+        <thead>
+        <tr><th class="span2">Word</th><th class="span2">added</th><th class="span1">Done?</th></tr>
+        </thead>
+        <tbody>
+        {% for word in learning_list %}
+        <tr><td class="span2">{{word.word}}</td><td class="span2">{{word.date_added}}</td><td class="span1">{% if word.date_completed %}<i class="icon-ok"></i>{% endif %}</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    </div>
+    {% endif %}
+    <h3 class='well'>Choose a new word!</h3> 
+    {% crispy form %}
+{% endblock %}

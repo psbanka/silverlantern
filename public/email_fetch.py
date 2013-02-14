@@ -10,16 +10,18 @@ import re
 from collections import Counter
 import traceback
 import StringIO
+from rq import Queue
 
 from datetime import datetime
 from public.static_data import REDIRECT_URI, GOOGLE_ACCOUNTS_BASE_URL
-from public.static_data import TEST_GOOGLE_REPLY, OK, FAIL
+from public.static_data import TEST_GOOGLE_REPLY, OK, FAIL, YIELD
 from public.static_data import TEST_EMAIL1, TEST_EMAIL2
-from public.models import WordUse, Word
+from public.models import WordUse, Word, WordsToLearn
 
 import django.utils.timezone
 from pprint import pformat
 import string
+from worker import conn
 
 logger = logging.getLogger(__name__)
 SEP_MATCHER = re.compile('On \S*, .* wrote:')
@@ -136,6 +138,13 @@ class Analytics(object):
             word_use.last_sent_to = self.to
             word_use.user = user
             word_use.save()
+            try:
+                word_to_learn = WordsToLearn.objects.get(
+                    user__id=self.user.id, word__exact=new_word)
+                word_to_learn.date_completed = datetime.utcnow()
+                logger.info("Marking success on word used: %s!" % new_word)
+            except WordsToLearn.DoesNotExist:
+                pass
 
 
 class EmailAnalyzer(object):
@@ -143,15 +152,6 @@ class EmailAnalyzer(object):
     def __init__(self, user):
         self.user = user
         self.profile = self.user.get_profile()
-
-    def _process_messages(self, messages):
-        """
-        Go through all the new messages received and do things
-        with them
-        """
-        for message_string in messages:
-            analytics = Analytics(message_string)
-            analytics.process_message(self.user)
 
     def _fetch_sent_messages(self, auth_string):
         """
@@ -164,27 +164,32 @@ class EmailAnalyzer(object):
                 generate_oath2_string. Must not be base64-encoded,
                 since imaplib does its own base64-encoding.
         """
+        status = OK
         if os.environ['ENV'] == 'dev':
             return [TEST_EMAIL1, TEST_EMAIL2]
         imap_conn = imaplib.IMAP4_SSL('imap.gmail.com')
         #imap_conn.debug = 4
         imap_conn.authenticate('XOAUTH2', lambda x: auth_string)
-        new_messages = []
         #try:
         #    list_output = imap_conn.list()
         #    log_object(list_output, 'LIST OUTPUT')
         #except Exception as exp:
         #    logger.info("LIST failed: %s" % exp)
 
-        status, msg_data = imap_conn.select("[Gmail]/Sent Mail")
+        select_status, msg_data = imap_conn.select("[Gmail]/Sent Mail")
+        if select_status != "OK":
+            msg = "Invalid status recieved when selecting: %s" % select_status
+            logger.info(msg)
+            return FAIL
         try:
             self.profile.last_message_on_server = int(msg_data[0])
         except Exception as exp:
             logger.info("Unable to determine final message: %s" % exp)
-            return []
+            return FAIL
         try:
             _result, message_data = imap_conn.search(None, 'ALL')
             message_numbers = message_data[0]
+            message_count = 0
             for num in message_numbers.split():
                 if int(num) < self.profile.last_message_processed:
                     logger.info("Skipping message we've processed: %s" % num)
@@ -192,10 +197,13 @@ class EmailAnalyzer(object):
                 _result, data = imap_conn.fetch(num, '(RFC822)')
                 logger.info('Message %s' % num)
                 self.profile.last_message_processed = int(num)
-                #logger.info("data[0][0]: %s" % data[0][0])
-                new_messages.append(data[0][1])
-                if len(new_messages) > 200:
+                message_string = data[0][1]
+                analytics = Analytics(message_string)
+                analytics.process_message(self.user)
+                message_count += 1
+                if message_count > 200:
                     logger.info('LIMITING NEW MESSAGES TO 200')
+                    status = YIELD
                     break
             imap_conn.close()
             imap_conn.logout()
@@ -205,7 +213,7 @@ class EmailAnalyzer(object):
             for line in fp.getvalue().split('\n'):
                 logger.error("%% %s" % line)
         self.profile.save()  # We need to record the message_id we last touched
-        return new_messages
+        return status
 
     def _fetch_access_token(self):
         """
@@ -277,8 +285,11 @@ class EmailAnalyzer(object):
         if self._fetch_access_token() == OK:
             creds = self._generate_oauth2_string(base64_encode=False)
             new_messages = self._fetch_sent_messages(creds)
-            self._process_messages(new_messages)
-            status = OK
+            status = self._process_messages(new_messages)
         else:
             logger.error("Unable to fetch access token. Aborting import")
+        if status == YIELD:
+            q = Queue(connection=conn)
+            logger.info("Queuing another job in EmailAnalyzer")
+            q.enqueue(self.process)
         return status

@@ -11,7 +11,7 @@ from django.contrib.auth.decorators import login_required
 import logging
 import os
 from rq import Queue
-from worker import conn
+from public.worker import conn
 
 from django.template import RequestContext
 from public.email_fetch import EmailAnalyzer
@@ -86,7 +86,7 @@ def profile(request):
         'ready_to_import': ready_to_import,
         'percent_imported': percent_imported,
         'title': "Profile for %s" % request.user.first_name,
-        'page_name': "Profile",
+        'page_name': "profile",
         'google_auth_url': url,
     }
     return render_to_response('profile.html', model)
@@ -142,7 +142,7 @@ def oauth2callback(request):
 
 
 @login_required
-def choose_new_word(request):
+def study(request):
     if request.method == 'POST':  # If the form has been submitted...
         form = WordChooserForm(request.POST)  # A form bound to the POST data
         if form.is_valid():  # All validation rules pass
@@ -152,17 +152,24 @@ def choose_new_word(request):
                 date_added=django.utils.timezone.now()
             )
             new_word_to_learn.save()
-            return HttpResponseRedirect('/accounts/profile/')
+            #return HttpResponseRedirect('/accounts/profile/')
     else:
         logger.info("GET condition")
         form = WordChooserForm()  # An unbound form
 
-    return render(request, 'choose_new_word.html', {
+    learning_list = []
+    try:
+        learning_list = WordsToLearn.objects.filter(user__id=request.user.id)
+    except WordsToLearn.DoesNotExist:
+        pass
+
+    return render(request, 'study.html', {
+        'page_name': 'study',
+        'learning_list': learning_list,
         'form': form,
     })
 
 
-@login_required
 def contact(request):
     if request.method == 'POST':  # If the form has been submitted...
         logger.info("codePOST condition")
