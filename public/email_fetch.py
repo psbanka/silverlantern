@@ -143,7 +143,13 @@ class Analytics(object):
             word_use.last_time_used = self.sent
             word_use.last_sent_to = self.to
             word_use.user = self.user
-            word_use.save()
+            try:
+                word_use.save()
+            except WordUse.DatabaseError as exp:
+                msg = "Unable to save word: (%s) due to: (%s)"
+                msg %= (new_word, exp)
+                logger.error(msg)
+                continue
             try:
                 word_to_learn = WordsToLearn.objects.get(
                     user__id=self.user.id, word__exact=new_word)
@@ -155,15 +161,14 @@ class Analytics(object):
     def process_message(self):
         self.sent_text = ''
         payload = self.message.get_payload()
-        if isinstance(payload, list):
+        content_type = self.message.get_content_type()
+        logger.info("CONTENT_TYPE OF MESSAGE: (%s)" % content_type)
+        if self.message.is_multipart():
             for message in payload:
                 if isinstance(message, email.message.Message):
                     analytics = Analytics(
                         self.user, message, to=self.to, sent=self.sent)
                     analytics.process_message()
-                else:
-                    log_object(message, "PAYLOAD message")
-                    self._process_payload(message)
         else:
             self._process_payload(payload)
 
