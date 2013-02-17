@@ -19,7 +19,7 @@ from public.static_data import TEST_EMAIL1, TEST_EMAIL2
 from public.models import WordUse, Word, WordsToLearn
 
 import django.utils.timezone
-from django.db import transaction
+#from django.db import transaction
 from pprint import pformat
 import string
 from worker import conn
@@ -166,11 +166,15 @@ class Analytics(object):
             except WordUse.DoesNotExist:
                 word_use = WordUse(word=word_object)
                 word_use.times_used = 0
+            except WordUse.DatabaseError as dbe:
+                logger.info('dbe: %s' % dbe)
+                log_object(dir(dbe), 'dir(dbe)')
 
             word_use.times_used += count
             word_use.last_time_used = self.sent
             word_use.last_sent_to = self.to
             word_use.user = self.user
+            word_use.word = word_object
             try:
                 word_use.save()
             except Exception as exp:
@@ -178,7 +182,12 @@ class Analytics(object):
                 msg = "Unable to save word: (%s) due to: (%s)"
                 msg %= (new_word, exp)
                 logger.error(msg)
-                transaction.rollback()
+                fp = StringIO.StringIO()
+                traceback.print_exc(file=fp)
+                for line in fp.getvalue().split('\n'):
+                    logger.error("%% %s" % line)
+
+                #transaction.rollback()
                 continue
             try:
                 word_to_learn = WordsToLearn.objects.get(
@@ -200,7 +209,11 @@ class Analytics(object):
                         self.user, message, to=self.to, sent=self.sent)
                     analytics.process_message()
         else:
-            self._process_payload(payload)
+            if content_type != "text/plain":
+                msg = "Ignoring invalid content-type: %s"
+                logger.warning(msg % content_type)
+            else:
+                self._process_payload(payload)
 
 
 class EmailAnalyzer(object):
