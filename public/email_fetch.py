@@ -47,21 +47,21 @@ def cleanup(new_word):
             new_word = new_word[:-1]
             found = True
     if any([letter in DISQUALIFIERS for letter in new_word]):
-        return ''
+        return None
     try:
-        Word.objects.get(word__exact=new_word)
+        word_object = Word.objects.get(word__exact=new_word)
     except Word.DoesNotExist:
         new_word = new_word.lower()
         try:
-            Word.objects.get(word__exact=new_word)
+            word_object = Word.objects.get(word__exact=new_word)
         except Word.DoesNotExist:
             new_word = new_word.capitalize()
             try:
-                Word.objects.get(word__exact=new_word)
+                word_object = Word.objects.get(word__exact=new_word)
             except Word.DoesNotExist:
                 logger.info("(%s) is NOT a dictionary word" % new_word)
-                return ''
-    return new_word
+                return None
+    return word_object
 
 
 def _get_accounts_url(command):
@@ -104,6 +104,33 @@ def _get_auth_token(authorization_code):
         urllib.urlopen(request_url, urllib.urlencode(params)).read())
 
 
+class FakeImapConn(object):
+    """
+    Sometimes we need to be able to test our system
+    without having to talk to Google.
+    """
+
+    def authenticate(self, _mechanism, authobject):
+        return
+
+    def select(self, _mailbox, readonly):
+        return "OK", [2]
+
+    def search(self, _charset, _criterion):
+        return "OK", ["1 2"]
+
+    def fetch(self, message_set, message_parts):
+        index = int(message_set) - 1
+        message_text = [TEST_EMAIL1, TEST_EMAIL2][index]
+        return "OK", [['', message_text]]
+
+    def close(self):
+        pass
+
+    def logout(self):
+        pass
+
+
 class Analytics(object):
 
     def __init__(self, user, message, to=None, sent=None):
@@ -131,13 +158,13 @@ class Analytics(object):
             self.sent_words += line.split()
 
         for new_word, count in Counter(self.sent_words).items():
-            new_word = cleanup(new_word)
-            if not new_word:
+            word_object = cleanup(new_word)
+            if not word_object:
                 continue
             try:
-                word_use = WordUse.objects.get(word__exact=new_word)
+                word_use = WordUse.objects.get(word__exact=word_object)
             except WordUse.DoesNotExist:
-                word_use = WordUse(word=new_word)
+                word_use = WordUse(word=word_object)
                 word_use.times_used = 0
 
             word_use.times_used += count
@@ -155,9 +182,9 @@ class Analytics(object):
                 continue
             try:
                 word_to_learn = WordsToLearn.objects.get(
-                    user__id=self.user.id, word__exact=new_word)
+                    user__id=self.user.id, word__exact=word_object)
                 word_to_learn.date_completed = datetime.utcnow()
-                logger.info("Marking success on word used: %s!" % new_word)
+                logger.info("Marking success on word used: %s!" % word_object)
             except WordsToLearn.DoesNotExist:
                 pass
 
@@ -194,9 +221,12 @@ class EmailAnalyzer(object):
                 since imaplib does its own base64-encoding.
         """
         status = OK
+        imap_conn = None
         if os.environ['ENV'] == 'dev':
-            return [TEST_EMAIL1, TEST_EMAIL2]
-        imap_conn = imaplib.IMAP4_SSL('imap.gmail.com')
+            imap_conn = FakeImapConn()
+        else:
+            imap_conn = imaplib.IMAP4_SSL('imap.gmail.com')
+
         #imap_conn.debug = 4
         imap_conn.authenticate('XOAUTH2', lambda x: auth_string)
         #try:
@@ -205,7 +235,8 @@ class EmailAnalyzer(object):
         #except Exception as exp:
         #    logger.info("LIST failed: %s" % exp)
 
-        select_status, msg_data = imap_conn.select("[Gmail]/Sent Mail")
+        select_status, msg_data = imap_conn.select(
+            "[Gmail]/Sent Mail", readonly=True)  # TESTING readonly
         if select_status != "OK":
             msg = "Invalid status recieved when selecting: %s" % select_status
             logger.info(msg)
@@ -323,3 +354,5 @@ class EmailAnalyzer(object):
             logger.info("Queuing another job in EmailAnalyzer")
             q.enqueue(self.process)
         return status
+
+#SDG
