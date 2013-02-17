@@ -161,7 +161,7 @@ class Analytics(object):
 
         for new_word, count in Counter(self.sent_words).items():
             word_object = cleanup(new_word)
-            if word_object is None or word_object.word is None:
+            if word_object is None or word_object.word == '':
                 continue
             logger.info("word object: (%s)" % word_object.word)
             logger.info("word object type: (%s)" % type(word_object.word))
