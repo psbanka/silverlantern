@@ -163,8 +163,6 @@ class Analytics(object):
             word_object = cleanup(new_word)
             if word_object is None or word_object.word == '':
                 continue
-            logger.info("word object: (%s)" % word_object.word)
-            logger.info("word object type: (%s)" % type(word_object.word))
             try:
                 word_use = WordUse.objects.get(word__exact=word_object)
             except WordUse.DoesNotExist:
@@ -205,7 +203,6 @@ class Analytics(object):
         self.sent_text = ''
         payload = self.message.get_payload()
         content_type = self.message.get_content_type()
-        logger.info("CONTENT_TYPE OF MESSAGE: (%s)" % content_type)
         if self.message.is_multipart():
             for message in payload:
                 if isinstance(message, email.message.Message):
