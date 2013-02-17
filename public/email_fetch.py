@@ -253,7 +253,13 @@ class Analytics(object):
                         self.user, message, to=self.to, sent=self.sent)
                     analytics.process_message()
         else:
-            if content_type != "text/plain":
+            if content_type == "text/html":
+                with open('/tmp/sample.html', 'w') as fh:
+                    fh.write(payload)
+                msg = "Dumping sample to /tmp/sample.html"
+                logger.warning(msg % content_type)
+                raise Exception("Quitting import")
+            elif content_type != "text/plain":
                 msg = "Ignoring invalid content-type: %s"
                 logger.warning(msg % content_type)
             else:
