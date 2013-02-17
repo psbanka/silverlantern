@@ -5,13 +5,19 @@ from crispy_forms.helper import FormHelper
 from crispy_forms.layout import Layout, Submit, Field
 from crispy_forms.bootstrap import FormActions
 from django.core.exceptions import ValidationError
-from public.models import WordUse
+from public.models import WordUse, Word
 
 
 def validate_word(new_word):
     try:
-        WordUse.objects.get(word__exact=new_word)
-        raise ValidationError('The word "%s" has already been used' % new_word)
+        word = Word.objects.get(word__exact=new_word)
+    except Word.DoesNotExist:
+        msg = 'The word "%s" is not in our dictionary.' % new_word
+        raise ValidationError(msg)
+    try:
+        WordUse.objects.get(word__exact=word)
+        msg = 'The word "%s" has already been used.' % word
+        raise ValidationError(msg)
     except WordUse.DoesNotExist:
         pass
 

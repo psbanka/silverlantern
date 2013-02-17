@@ -16,7 +16,7 @@ from public.worker import conn
 from django.template import RequestContext
 from public.email_fetch import EmailAnalyzer
 from public.static_data import REDIRECT_URI, TEST_OAUTH_CALLBACK
-from public.models import WordsToLearn
+from public.models import Word, WordsToLearn
 import django.utils.timezone
 
 # Get an instance of a logger
@@ -146,8 +146,9 @@ def study(request):
     if request.method == 'POST':  # If the form has been submitted...
         form = WordChooserForm(request.POST)  # A form bound to the POST data
         if form.is_valid():  # All validation rules pass
+            word = Word.objects.get(word__exact=form.cleaned_data['new_word'])
             new_word_to_learn = WordsToLearn(
-                word=form.cleaned_data['new_word'],
+                word=word,
                 user=request.user,
                 date_added=django.utils.timezone.now()
             )
