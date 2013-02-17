@@ -48,6 +48,8 @@ def cleanup(new_word):
             found = True
     if any([letter in DISQUALIFIERS for letter in new_word]):
         return None
+
+    word_object = None
     try:
         word_object = Word.objects.get(word__exact=new_word)
     except Word.DoesNotExist:
@@ -159,9 +161,10 @@ class Analytics(object):
 
         for new_word, count in Counter(self.sent_words).items():
             word_object = cleanup(new_word)
-            if not word_object:
+            if word_object is None or word_object.word is None:
                 continue
             logger.info("word object: (%s)" % word_object.word)
+            logger.info("word object type: (%s)" % type(word_object.word))
             try:
                 word_use = WordUse.objects.get(word__exact=word_object)
             except WordUse.DoesNotExist:
