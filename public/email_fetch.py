@@ -161,6 +161,7 @@ class Analytics(object):
             word_object = cleanup(new_word)
             if not word_object:
                 continue
+            logger.info("word object: (%s)" % word_object.word)
             try:
                 word_use = WordUse.objects.get(word__exact=word_object)
             except WordUse.DoesNotExist:
