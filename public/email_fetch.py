@@ -13,6 +13,7 @@ import traceback
 import StringIO
 from rq import Queue
 import mmstats
+from bs4 import BeautifulSoup
 
 from datetime import datetime
 from public.static_data import REDIRECT_URI, GOOGLE_ACCOUNTS_BASE_URL
@@ -254,11 +255,9 @@ class Analytics(object):
                     analytics.process_message()
         else:
             if content_type == "text/html":
-                with open('/tmp/sample.html', 'w') as fh:
-                    fh.write(payload)
-                msg = "Dumping sample to /tmp/sample.html"
-                logger.warning(msg % content_type)
-                raise Exception("Quitting import")
+                with self.stats.payload_processing_timer:
+                    self._process_payload(
+                        BeautifulSoup(payload).get_text())
             elif content_type != "text/plain":
                 msg = "Ignoring invalid content-type: %s"
                 logger.warning(msg % content_type)
