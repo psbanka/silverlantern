@@ -1,4 +1,7 @@
 Django==1.4.3
+Flask==0.9
+Jinja2==2.6
+Werkzeug==0.8.3
 argparse==1.2.1
 distribute==0.6.24
 dj-database-url==0.2.1
@@ -6,6 +9,7 @@ django-crispy-forms==1.2.3
 flake8==1.7.0
 gunicorn==0.17.2
 ipython==0.13.1
+mmstats==0.7.2
 python-dateutil==2.1
 pytz==2012j
 redis==2.7.2

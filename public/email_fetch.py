@@ -7,15 +7,17 @@ import base64
 import imaplib
 import email
 import re
+import random
 from collections import Counter
 import traceback
 import StringIO
 from rq import Queue
+import mmstats
 
 from datetime import datetime
 from public.static_data import REDIRECT_URI, GOOGLE_ACCOUNTS_BASE_URL
 from public.static_data import TEST_GOOGLE_REPLY, OK, FAIL, YIELD
-from public.static_data import TEST_EMAIL1, TEST_EMAIL2
+from public.static_data import TEST_EMAIL_TEMPLATE
 from public.models import WordUse, Word, WordsToLearn
 
 import django.utils.timezone
@@ -61,8 +63,17 @@ def cleanup(new_word):
             try:
                 word_object = Word.objects.get(word__exact=new_word)
             except Word.DoesNotExist:
-                logger.info("(%s) is NOT a dictionary word" % new_word)
+                #logger.info("(%s) is NOT a dictionary word" % new_word)
                 return None
+    if new_word.endswith("'s"):
+        new_word = new_word[:-2]
+        try:
+            word_object = Word.objects.get(word__exact=new_word)
+        except Word.DoesNotExist:
+            msg = "(%s) is NOT a dictionary word but %s's is?"
+            logger.info(msg % (new_word, new_word))
+            return None
+    word_object = Word.objects.get(word__exact=new_word)
     return word_object
 
 
@@ -112,6 +123,11 @@ class FakeImapConn(object):
     without having to talk to Google.
     """
 
+    def __init__(self, profile):
+        # We store the profile so we can know what message
+        # numbers to send.
+        self.profile = profile
+
     def authenticate(self, _mechanism, authobject):
         return
 
@@ -119,12 +135,16 @@ class FakeImapConn(object):
         return "OK", [2]
 
     def search(self, _charset, _criterion):
-        return "OK", ["1 2"]
+        last = self.profile.last_message_processed
+        message_string = ' '.join([str(x) for x in xrange(1, last+2)])
+        return "OK", [message_string]
 
     def fetch(self, message_set, message_parts):
-        index = int(message_set) - 1
-        message_text = [TEST_EMAIL1, TEST_EMAIL2][index]
-        return "OK", [['', message_text]]
+        count = Word.objects.all().count()
+        indexes = [random.randrange(0, count) for x in xrange(0, 100)]
+        message_body = ' '.join([Word.objects.get(pk=x).word for x in indexes])
+        fake_message = TEST_EMAIL_TEMPLATE % message_body
+        return "OK", [['', fake_message]]
 
     def close(self):
         pass
@@ -133,21 +153,41 @@ class FakeImapConn(object):
         pass
 
 
+class EmailStats(mmstats.MmStats):
+    payload_processing_timer = mmstats.TimerField(label="message_processing")
+    cleanup_timer = mmstats.TimerField(label="cleanup")
+    save_timer = mmstats.TimerField(label="cleanup")
+    #wait_for_prompt_timer = mmstats.TimerField(label="wait_for_prompt")
+    #line_timeout_counter = mmstats.CounterField(label="line_timeout")
+    #test_counter = mmstats.CounterField(label="test_counter")
+    #to_router_counter = mmstats.CounterField(label="to_router")
+
+
 class Analytics(object):
 
     def __init__(self, user, message, to=None, sent=None):
         self.user = user
+        self.stats = EmailStats(
+            label_prefix='email.stats.'
+        )
         self.message = message
         self.to = to
         if not self.to:
             self.to = self.message.get('To')
             if not self.to:
                 self.to = "UNKNOWN"
+        if len(self.to) >= 100:
+            logger.warning("Invalid send-to-value: (%s)" % self.to)
+            self.to = "UNKNOWN"
         self.sent = sent
         if not self.sent:
             sent_time = time.mktime(
                 email.utils.parsedate(self.message["Date"]))
             self.sent = datetime.fromtimestamp(sent_time)
+            if not django.utils.timezone.is_aware(self.sent):
+                self.sent = django.utils.timezone.make_aware(
+                    self.sent, django.utils.timezone.get_default_timezone())
+
         self.sent_words = []
 
     def _process_payload(self, payload):
@@ -160,7 +200,9 @@ class Analytics(object):
             self.sent_words += line.split()
 
         for new_word, count in Counter(self.sent_words).items():
-            word_object = cleanup(new_word)
+            word_object = None
+            with self.stats.cleanup_timer:
+                word_object = cleanup(new_word)
             if word_object is None or word_object.word == '':
                 continue
             try:
@@ -169,28 +211,29 @@ class Analytics(object):
                 word_use = WordUse(word=word_object)
                 word_use.times_used = 0
             except WordUse.DatabaseError as dbe:
-                logger.info('dbe: %s' % dbe)
+                logger.error('dbe: %s' % dbe)
                 log_object(dir(dbe), 'dir(dbe)')
 
-            word_use.times_used += count
-            word_use.last_time_used = self.sent
-            word_use.last_sent_to = self.to
-            word_use.user = self.user
-            word_use.word = word_object
-            try:
-                word_use.save()
-            except Exception as exp:
-                logger.info("EXCEPTION THROWN: %s" % type(exp))
-                msg = "Unable to save word: (%s) due to: (%s)"
-                msg %= (new_word, exp)
-                logger.error(msg)
-                fp = StringIO.StringIO()
-                traceback.print_exc(file=fp)
-                for line in fp.getvalue().split('\n'):
-                    logger.error("%% %s" % line)
+            with self.stats.save_timer:
+                word_use.times_used += count
+                word_use.last_time_used = self.sent
+                word_use.last_sent_to = self.to
+                word_use.user = self.user
+                word_use.word = word_object
+                try:
+                    word_use.save()
+                except Exception as exp:
+                    logger.error("EXCEPTION THROWN: %s" % type(exp))
+                    msg = "Unable to save word: (%s) due to: (%s)"
+                    msg %= (new_word, exp)
+                    logger.error(msg)
+                    fp = StringIO.StringIO()
+                    traceback.print_exc(file=fp)
+                    for line in fp.getvalue().split('\n'):
+                        logger.error("%% %s" % line)
 
-                #transaction.rollback()
-                continue
+                    #transaction.rollback()
+                    continue
             try:
                 word_to_learn = WordsToLearn.objects.get(
                     user__id=self.user.id, word__exact=word_object)
@@ -214,7 +257,8 @@ class Analytics(object):
                 msg = "Ignoring invalid content-type: %s"
                 logger.warning(msg % content_type)
             else:
-                self._process_payload(payload)
+                with self.stats.payload_processing_timer:
+                    self._process_payload(payload)
 
 
 class EmailAnalyzer(object):
@@ -222,6 +266,7 @@ class EmailAnalyzer(object):
     def __init__(self, user):
         self.user = user
         self.profile = self.user.get_profile()
+        #self.stats = None
 
     def _fetch_sent_messages(self, auth_string):
         """
@@ -237,7 +282,7 @@ class EmailAnalyzer(object):
         status = OK
         imap_conn = None
         if os.environ['ENV'] == 'dev':
-            imap_conn = FakeImapConn()
+            imap_conn = FakeImapConn(self.profile)
         else:
             imap_conn = imaplib.IMAP4_SSL('imap.gmail.com')
 
@@ -253,12 +298,12 @@ class EmailAnalyzer(object):
             "[Gmail]/Sent Mail", readonly=True)  # TESTING readonly
         if select_status != "OK":
             msg = "Invalid status recieved when selecting: %s" % select_status
-            logger.info(msg)
+            logger.error(msg)
             return FAIL
         try:
             self.profile.last_message_on_server = int(msg_data[0])
         except Exception as exp:
-            logger.info("Unable to determine final message: %s" % exp)
+            logger.error("Unable to determine final message: %s" % exp)
             return FAIL
         try:
             _result, message_data = imap_conn.search(None, 'ALL')
@@ -266,10 +311,11 @@ class EmailAnalyzer(object):
             message_count = 0
             for num in message_numbers.split():
                 if int(num) < self.profile.last_message_processed:
-                    logger.info("Skipping message we've processed: %s" % num)
+                    #logger.info("Skipping message we've processed: %s" % num)
                     continue
                 _result, data = imap_conn.fetch(num, '(RFC822)')
-                logger.info('Message %s' % num)
+                msg = 'Processing message %s for %s' % (num, self.user.email)
+                logger.info(msg)
                 self.profile.last_message_processed = int(num)
                 self.profile.save()
                 message_string = data[0][1]
@@ -278,7 +324,8 @@ class EmailAnalyzer(object):
                 analytics.process_message()
                 message_count += 1
                 if message_count > MAX_TO_PROCESS:
-                    logger.info('LIMITING NEW MESSAGES TO %s' % MAX_TO_PROCESS)
+                    msg = '<== Limiting new messages to %s' % MAX_TO_PROCESS
+                    logger.info(msg)
                     status = YIELD
                     break
             imap_conn.close()
@@ -307,7 +354,7 @@ class EmailAnalyzer(object):
         server_response = _get_auth_token(code)
         error = server_response.get("error")
         if error:
-            logger.info('ERROR RETURNED FROM THE SERVER (%s)' % error)
+            logger.error('Error returned from the server (%s)' % error)
             return FAIL
 
         code = server_response.get('code')
@@ -362,7 +409,7 @@ class EmailAnalyzer(object):
             creds = self._generate_oauth2_string(base64_encode=False)
             status = self._fetch_sent_messages(creds)
         else:
-            logger.error("Unable to fetch access token. Aborting import")
+            logger.error("Unable to obtain access token. Aborting import")
         if status == YIELD:
             q = Queue(connection=conn)
             logger.info("Queuing another job in EmailAnalyzer")

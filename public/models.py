@@ -12,7 +12,10 @@ class Word(models.Model):
     Our basic word database. We keep track of all our English words
     here, as well possibly, as other interesting features.
     """
-    word = models.CharField(max_length=100, primary_key=True)
+    word = models.CharField(max_length=100, unique=True)
+
+    def __unicode__(self):
+        return "%s" % (self.word)
 
 
 class WordUse(models.Model):
@@ -28,7 +31,7 @@ class WordUse(models.Model):
     last_sent_to = models.CharField(max_length=100)
 
     def __unicode__(self):
-        return "%s used %d times." % (self.word, self.times_used)
+        return "%s (%d)" % (self.word, self.times_used)
 
 
 class WordsToLearn(models.Model):
