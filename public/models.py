@@ -7,6 +7,17 @@ import django.utils.timezone
 logger = logging.getLogger(__name__)
 
 
+class InterestingEmail(models.Model):
+    """
+    When our system chokes on an email, keep track of it so we
+    can figure out how to make the system more resilient.
+    """
+    text = models.TextField()
+
+    def __unicode__(self):
+        return "%s" % (self.word)
+
+
 class Word(models.Model):
     """
     Our basic word database. We keep track of all our English words

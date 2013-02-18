@@ -9,8 +9,8 @@ import email
 import re
 import random
 from collections import Counter
-import traceback
-import StringIO
+#import traceback
+#import StringIO
 from rq import Queue
 import mmstats
 from bs4 import BeautifulSoup
@@ -19,7 +19,7 @@ from datetime import datetime
 from public.static_data import REDIRECT_URI, GOOGLE_ACCOUNTS_BASE_URL
 from public.static_data import TEST_GOOGLE_REPLY, OK, FAIL, YIELD
 from public.static_data import TEST_EMAIL_TEMPLATE
-from public.models import WordUse, Word, WordsToLearn
+from public.models import WordUse, Word, WordsToLearn, InterestingEmail
 
 import django.utils.timezone
 #from django.db import transaction
@@ -79,14 +79,7 @@ def cleanup(new_word):
 
 
 def _get_accounts_url(command):
-    """Generates the Google Accounts URL.
-
-    Args:
-      command: The command to execute.
-
-    Returns:
-      A URL for the given command.
-    """
+    """Generates the Google Accounts URL."""
     return '%s/%s' % (GOOGLE_ACCOUNTS_BASE_URL, command)
 
 
@@ -118,11 +111,32 @@ def _get_auth_token(authorization_code):
         urllib.urlopen(request_url, urllib.urlencode(params)).read())
 
 
+class EmailProcessingException(Exception):
+
+    def __init__(self, message_string):
+        super(EmailProcessingException).__init__(self)
+        logger.error("Error processing message. Writing to database.")
+        self.message_string = message_string
+        interesting_email = InterestingEmail(message_string)
+        interesting_email.write()
+
+    def __unicode__(self):
+        if len(self.message_string) > 10:
+            return "Sample: '%s...'" % self.message_string[:10]
+        else:
+            return "Sample: '%s'" % self.message_string
+
+    def __repr__(self):
+        return self.__unicode__(self)
+
+
 class FakeImapConn(object):
     """
     Sometimes we need to be able to test our system
     without having to talk to Google.
     """
+
+    MSG_COUNT = 10
 
     def __init__(self, profile):
         # We store the profile so we can know what message
@@ -133,12 +147,13 @@ class FakeImapConn(object):
         return
 
     def select(self, _mailbox, readonly):
-        return "OK", [2]
+        last = self.profile.last_message_processed
+        return "OK", [last + self.MSG_COUNT]
 
     def search(self, _charset, _criterion):
         last = self.profile.last_message_processed
-        message_string = ' '.join([str(x) for x in xrange(1, last+2)])
-        return "OK", [message_string]
+        msg_data = ' '.join([str(x) for x in xrange(1, last+self.MSG_COUNT)])
+        return "OK", [msg_data]
 
     def fetch(self, message_set, message_parts):
         count = Word.objects.all().count()
@@ -221,20 +236,7 @@ class Analytics(object):
                 word_use.last_sent_to = self.to
                 word_use.user = self.user
                 word_use.word = word_object
-                try:
-                    word_use.save()
-                except Exception as exp:
-                    logger.error("EXCEPTION THROWN: %s" % type(exp))
-                    msg = "Unable to save word: (%s) due to: (%s)"
-                    msg %= (new_word, exp)
-                    logger.error(msg)
-                    fp = StringIO.StringIO()
-                    traceback.print_exc(file=fp)
-                    for line in fp.getvalue().split('\n'):
-                        logger.error("%% %s" % line)
-
-                    #transaction.rollback()
-                    continue
+                word_use.save()
             try:
                 word_to_learn = WordsToLearn.objects.get(
                     user__id=self.user.id, word__exact=word_object)
@@ -310,36 +312,35 @@ class EmailAnalyzer(object):
         except Exception as exp:
             logger.error("Unable to determine final message: %s" % exp)
             return FAIL
-        try:
-            _result, message_data = imap_conn.search(None, 'ALL')
-            message_numbers = message_data[0]
-            message_count = 0
-            for num in message_numbers.split():
-                if int(num) < self.profile.last_message_processed:
-                    #logger.info("Skipping message we've processed: %s" % num)
-                    continue
-                _result, data = imap_conn.fetch(num, '(RFC822)')
-                msg = 'Processing message %s for %s' % (num, self.user.email)
-                logger.info(msg)
-                self.profile.last_message_processed = int(num)
-                self.profile.save()
-                message_string = data[0][1]
-                message = email.message_from_string(message_string)
-                analytics = Analytics(self.user, message)
+
+        _result, message_data = imap_conn.search(None, 'ALL')
+        message_numbers = message_data[0]
+        message_count = 0
+
+        for num in message_numbers.split():
+            if int(num) < self.profile.last_message_processed:
+                #logger.info("Skipping message we've processed: %s" % num)
+                continue
+            _result, data = imap_conn.fetch(num, '(RFC822)')
+            msg = 'Processing message %s for %s' % (num, self.user.email)
+            logger.info(msg)
+            self.profile.last_message_processed = int(num)
+            self.profile.save()
+            message_string = data[0][1]
+            message = email.message_from_string(message_string)
+            analytics = Analytics(self.user, message)
+            try:
                 analytics.process_message()
-                message_count += 1
-                if message_count > MAX_TO_PROCESS:
-                    msg = '<== Limiting new messages to %s' % MAX_TO_PROCESS
-                    logger.info(msg)
-                    status = YIELD
-                    break
-            imap_conn.close()
-            imap_conn.logout()
-        except Exception as exp:
-            fp = StringIO.StringIO()
-            traceback.print_exc(file=fp)
-            for line in fp.getvalue().split('\n'):
-                logger.error("%% %s" % line)
+            except Exception as exp:
+                raise EmailProcessingException(message_string)
+            message_count += 1
+            if message_count > MAX_TO_PROCESS:
+                msg = '<== Limiting new messages to %s' % MAX_TO_PROCESS
+                logger.info(msg)
+                status = YIELD
+                break
+        imap_conn.close()
+        imap_conn.logout()
         self.profile.save()  # We need to record the message_id we last touched
         return status
 
