@@ -114,7 +114,7 @@ def _get_auth_token(authorization_code):
 class EmailProcessingException(Exception):
 
     def __init__(self, message_string):
-        super(EmailProcessingException).__init__(self)
+        super(EmailProcessingException, self).__init__()
         logger.error("Error processing message. Writing to database.")
         self.message_string = message_string
         interesting_email = InterestingEmail(message_string)
