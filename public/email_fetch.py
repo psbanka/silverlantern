@@ -117,7 +117,7 @@ class EmailProcessingException(Exception):
         super(EmailProcessingException, self).__init__()
         logger.error("Error processing message. Writing to database.")
         self.message_string = message_string
-        interesting_email = InterestingEmail(message_string)
+        interesting_email = InterestingEmail(text=message_string)
         interesting_email.save()
 
     def __unicode__(self):
