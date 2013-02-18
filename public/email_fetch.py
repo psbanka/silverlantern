@@ -118,7 +118,7 @@ class EmailProcessingException(Exception):
         logger.error("Error processing message. Writing to database.")
         self.message_string = message_string
         interesting_email = InterestingEmail(message_string)
-        interesting_email.write()
+        interesting_email.save()
 
     def __unicode__(self):
         if len(self.message_string) > 10:
