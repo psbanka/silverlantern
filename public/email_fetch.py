@@ -33,6 +33,64 @@ DISQUALIFIERS = string.digits + '`~!@#$%^&*()_=+{[}]\|";:<,.>/?'
 MAX_TO_PROCESS = 10
 
 
+class EmailStats(mmstats.MmStats):
+    imap_timer = mmstats.TimerField()
+    fetch_timer = mmstats.TimerField()
+    process_timer = mmstats.TimerField()
+    analytic_timer1 = mmstats.TimerField()
+    analytic_timer1a = mmstats.TimerField()
+    analytic_timer2 = mmstats.TimerField()
+    analytic_timer2a = mmstats.TimerField()
+    analytic_timer3 = mmstats.TimerField()
+    word_processing_timer = mmstats.TimerField()
+    word_use_save = mmstats.TimerField()
+    #cleanup_timer = mmstats.TimerField()
+    #save_timer = mmstats.TimerField()
+    #wait_for_prompt_timer = mmstats.TimerField(label="wait_for_prompt")
+    #line_timeout_counter = mmstats.CounterField(label="line_timeout")
+    #test_counter = mmstats.CounterField(label="test_counter")
+    #to_router_counter = mmstats.CounterField(label="to_router")
+
+
+stats = EmailStats(
+    label_prefix='email.stats.'
+)
+
+
+def _get_object_or_dict(word_candidate):
+    """Get an object or None"""
+    word_object = None
+    try:
+        word_object = Word.objects.get(word__exact=word_candidate)
+    except Word.DoesNotExist:
+        pass
+    return word_object
+
+
+def _get_word_object(new_word):
+    """
+    Figure out capitalization and return a word object
+    """
+    word_object = _get_object_or_dict(new_word)
+    if not word_object:
+        new_word = new_word.lower()
+        word_object = _get_object_or_dict(new_word)
+        if not word_object:
+            new_word = new_word.capitalize()
+            word_object = _get_object_or_dict(new_word)
+            if not word_object:
+                return None
+
+    if new_word.endswith("'s"):
+        new_word = new_word[:-2]
+        word_object = _get_object_or_dict(new_word)
+        if not word_object:
+            msg = "(%s) is NOT a dictionary word but (%s's) is?"
+            logger.info(msg % (new_word, new_word))
+            return None
+    return word_object
+
+
 def cleanup(new_word):
     """
     We have been given a word with potentially a bunch of punctuation
@@ -52,30 +110,7 @@ def cleanup(new_word):
     if any([letter in DISQUALIFIERS for letter in new_word]):
         return None
 
-    word_object = None
-    try:
-        word_object = Word.objects.get(word__exact=new_word)
-    except Word.DoesNotExist:
-        new_word = new_word.lower()
-        try:
-            word_object = Word.objects.get(word__exact=new_word)
-        except Word.DoesNotExist:
-            new_word = new_word.capitalize()
-            try:
-                word_object = Word.objects.get(word__exact=new_word)
-            except Word.DoesNotExist:
-                #logger.info("(%s) is NOT a dictionary word" % new_word)
-                return None
-    if new_word.endswith("'s"):
-        new_word = new_word[:-2]
-        try:
-            word_object = Word.objects.get(word__exact=new_word)
-        except Word.DoesNotExist:
-            msg = "(%s) is NOT a dictionary word but %s's is?"
-            logger.info(msg % (new_word, new_word))
-            return None
-    word_object = Word.objects.get(word__exact=new_word)
-    return word_object
+    return _get_word_object(new_word)
 
 
 def _get_accounts_url(command):
@@ -169,25 +204,13 @@ class FakeImapConn(object):
         pass
 
 
-class EmailStats(mmstats.MmStats):
-    payload_processing_timer = mmstats.TimerField(label="message_processing")
-    cleanup_timer = mmstats.TimerField(label="cleanup")
-    save_timer = mmstats.TimerField(label="cleanup")
-    #wait_for_prompt_timer = mmstats.TimerField(label="wait_for_prompt")
-    #line_timeout_counter = mmstats.CounterField(label="line_timeout")
-    #test_counter = mmstats.CounterField(label="test_counter")
-    #to_router_counter = mmstats.CounterField(label="to_router")
-
-
 class Analytics(object):
 
-    def __init__(self, user, message, to=None, sent=None):
+    def __init__(self, user, message, word_use_dict, to=None, sent=None):
         self.user = user
-        self.stats = EmailStats(
-            label_prefix='email.stats.'
-        )
         self.message = message
         self.to = to
+        self.word_use_dict = word_use_dict
         if not self.to:
             self.to = self.message.get('To')
             if not self.to:
@@ -216,34 +239,41 @@ class Analytics(object):
             self.sent_words += line.split()
 
         for new_word, count in Counter(self.sent_words).items():
-            word_object = None
-            with self.stats.cleanup_timer:
-                word_object = cleanup(new_word)
-            if word_object is None or word_object.word == '':
-                continue
-            try:
-                word_use = WordUse.objects.get(word__exact=word_object)
-            except WordUse.DoesNotExist:
-                word_use = WordUse(word=word_object)
-                word_use.times_used = 0
-            except WordUse.DatabaseError as dbe:
-                logger.error('dbe: %s' % dbe)
-                log_object(dir(dbe), 'dir(dbe)')
+            with stats.word_processing_timer:
+                word_object = None
+                with stats.analytic_timer1:
+                    word_object = cleanup(new_word)
+                if word_object is None or word_object.word == '':
+                    continue
 
-            with self.stats.save_timer:
-                word_use.times_used += count
-                word_use.last_time_used = self.sent
-                word_use.last_sent_to = self.to
-                word_use.user = self.user
-                word_use.word = word_object
-                word_use.save()
-            try:
-                word_to_learn = WordsToLearn.objects.get(
-                    user__id=self.user.id, word__exact=word_object)
-                word_to_learn.date_completed = datetime.utcnow()
-                logger.info("Marking success on word used: %s!" % word_object)
-            except WordsToLearn.DoesNotExist:
-                pass
+                with stats.analytic_timer1a:
+                    word_use = self.word_use_dict.get(word_object.word)
+                    try:
+                        word_use = WordUse.objects.get(word__exact=word_object)
+                        self.word_use_dict[word_object.word] = word_use
+                    except WordUse.DoesNotExist:
+                        word_use = WordUse(word=word_object)
+                        self.word_use_dict[word_object.word] = word_use
+                        word_use.times_used = 0
+                    except WordUse.DatabaseError as dbe:
+                        logger.error('dbe: %s' % dbe)
+                        log_object(dir(dbe), 'dir(dbe)')
+
+                self.word_use_dict[word_object.word].times_used += count
+                self.word_use_dict[word_object.word].last_time_used = self.sent
+                self.word_use_dict[word_object.word].last_sent_to = self.to
+                self.word_use_dict[word_object.word].user = self.user
+                self.word_use_dict[word_object.word].word = word_object
+                try:
+                    with stats.analytic_timer2a:
+                        word_to_learn = WordsToLearn.objects.get(
+                            user__id=self.user.id, word__exact=word_object)
+                        word_to_learn.date_completed = datetime.utcnow()
+                        word_to_learn.save()
+                        msg = "Marking success on word used: %s!"
+                        logger.info(msg % word_object)
+                except WordsToLearn.DoesNotExist:
+                    pass
 
     def process_message(self):
         self.sent_text = ''
@@ -253,19 +283,22 @@ class Analytics(object):
             for message in payload:
                 if isinstance(message, email.message.Message):
                     analytics = Analytics(
-                        self.user, message, to=self.to, sent=self.sent)
+                        self.user, message, self.word_use_dict,
+                        to=self.to, sent=self.sent)
                     analytics.process_message()
         else:
-            if content_type == "text/html":
-                with self.stats.payload_processing_timer:
+            if content_type == "image/jpeg":
+                pass
+            elif content_type == "text/html":
+                with stats.analytic_timer3:
                     self._process_payload(
                         BeautifulSoup(payload).get_text())
-            elif content_type != "text/plain":
+            elif content_type == "text/plain":
+                with stats.analytic_timer3:
+                    self._process_payload(payload)
+            else:
                 msg = "Ignoring invalid content-type: %s"
                 logger.warning(msg % content_type)
-            else:
-                with self.stats.payload_processing_timer:
-                    self._process_payload(payload)
 
 
 class EmailAnalyzer(object):
@@ -273,7 +306,7 @@ class EmailAnalyzer(object):
     def __init__(self, user):
         self.user = user
         self.profile = self.user.get_profile()
-        #self.stats = None
+        self.word_use_dict = {}
 
     def _fetch_sent_messages(self, auth_string):
         """
@@ -293,45 +326,51 @@ class EmailAnalyzer(object):
         else:
             imap_conn = imaplib.IMAP4_SSL('imap.gmail.com')
 
-        #imap_conn.debug = 4
-        imap_conn.authenticate('XOAUTH2', lambda x: auth_string)
-        #try:
-        #    list_output = imap_conn.list()
-        #    log_object(list_output, 'LIST OUTPUT')
-        #except Exception as exp:
-        #    logger.info("LIST failed: %s" % exp)
+        with stats.imap_timer:
+            #imap_conn.debug = 4
+            imap_conn.authenticate('XOAUTH2', lambda x: auth_string)
+            #try:
+            #    list_output = imap_conn.list()
+            #    log_object(list_output, 'LIST OUTPUT')
+            #except Exception as exp:
+            #    logger.info("LIST failed: %s" % exp)
 
-        select_status, msg_data = imap_conn.select(
-            "[Gmail]/Sent Mail", readonly=True)  # TESTING readonly
-        if select_status != "OK":
-            msg = "Invalid status recieved when selecting: %s" % select_status
-            logger.error(msg)
-            return FAIL
-        try:
-            self.profile.last_message_on_server = int(msg_data[0])
-        except Exception as exp:
-            logger.error("Unable to determine final message: %s" % exp)
-            return FAIL
+            select_status, msg_data = imap_conn.select(
+                "[Gmail]/Sent Mail", readonly=True)  # TESTING readonly
+            if select_status != "OK":
+                msg = "Invalid status recieved when selecting: %s"
+                logger.error(msg % select_status)
+                return FAIL
+            try:
+                self.profile.last_message_on_server = int(msg_data[0])
+            except Exception as exp:
+                logger.error("Unable to determine final message: %s" % exp)
+                return FAIL
 
-        _result, message_data = imap_conn.search(None, 'ALL')
-        message_numbers = message_data[0]
-        message_count = 0
+            _result, message_data = imap_conn.search(None, 'ALL')
+            message_numbers = message_data[0]
+            message_count = 0
 
         for num in message_numbers.split():
             if int(num) < self.profile.last_message_processed:
                 #logger.info("Skipping message we've processed: %s" % num)
                 continue
-            _result, data = imap_conn.fetch(num, '(RFC822)')
-            msg = 'Processing message %s for %s' % (num, self.user.email)
-            logger.info(msg)
-            self.profile.last_message_processed = int(num)
-            self.profile.save()
-            message_string = data[0][1]
+            message_string = ''
+            with stats.fetch_timer:
+                _result, data = imap_conn.fetch(num, '(RFC822)')
+                msg = 'Processing message %s for %s' % (num, self.user.email)
+                logger.info(msg)
+                self.profile.last_message_processed = int(num)
+                self.profile.save()
+                message_string = data[0][1]
             message = email.message_from_string(message_string)
-            analytics = Analytics(self.user, message)
-            try:
-                analytics.process_message()
-            except Exception as exp:
+            analytics = Analytics(self.user, message, self.word_use_dict)
+            if 1 == 1:
+            #try:
+                with stats.process_timer:
+                    analytics.process_message()
+            else:
+            #except Exception as exp:
                 raise EmailProcessingException(message_string)
             message_count += 1
             if message_count > MAX_TO_PROCESS:
@@ -342,7 +381,18 @@ class EmailAnalyzer(object):
         imap_conn.close()
         imap_conn.logout()
         self.profile.save()  # We need to record the message_id we last touched
+        self._save_word_use()
         return status
+
+    def _save_word_use(self):
+        """Save all our word_use items"""
+        start_time = time.time()
+        msg = "Saving %d word use items..."
+        logger.info(msg % len(self.word_use_dict.keys()))
+        with stats.word_use_save:
+            for key, word_use in self.word_use_dict.items():
+                word_use.save()
+        logger.info("Finished save (%s seconds)." % time.time() - start_time)
 
     def _fetch_access_token(self):
         """
