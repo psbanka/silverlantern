@@ -329,7 +329,7 @@ class EmailAnalyzer(object):
             _result, data = imap_conn.fetch(num, '(RFC822)')
             msg = 'Processing message %s for %s' % (num, self.user.email)
             logger.info(msg)
-            self.profile.last_message_processed = int(num)
+            self.profile.last_message_processed = int(num) + 1
             self.profile.save()
             message_string = data[0][1]
             message = email.message_from_string(message_string)
