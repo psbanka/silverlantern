@@ -424,8 +424,6 @@ class EmailAnalyzer(object):
                 logger.error("Unable to obtain access token. Aborting import")
         except EmailProcessingException:
             logger.info("Encountered email we can't process. Skipping.")
-            self.profile.last_message_processed += 1
-            self.profile.save()
             status = YIELD
         if status == YIELD:
             q = Queue(connection=conn)
