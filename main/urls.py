@@ -15,7 +15,7 @@ urlpatterns = patterns(
     url(r'^oauth2callback/$', views.oauth2callback, name="oauth2callback"),
     url(r'^fetch_my_mail/$', views.fetch_my_mail, name="fetch_my_mail"),
     url(r'^study/$', views.study, name="study"),
-    url(r'thanks/$', views.thanks, name='thanks'),
+    url(r'^thanks/$', views.thanks, name='thanks'),
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
     url(r'^admin/', include(admin.site.urls)),
 )

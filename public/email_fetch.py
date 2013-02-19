@@ -22,7 +22,6 @@ from public.static_data import TEST_EMAIL_TEMPLATE
 from public.models import WordUse, Word, WordsToLearn, InterestingEmail
 
 import django.utils.timezone
-#from django.db import transaction
 from pprint import pformat
 import string
 from worker import conn
@@ -118,7 +117,13 @@ class EmailProcessingException(Exception):
         logger.error("Error processing message. Writing to database.")
         self.message_string = message_string
         interesting_email = InterestingEmail(text=message_string)
-        interesting_email.save()
+        try:
+            interesting_email.save()
+        except Exception:
+            logger.error("could not save email. For further analysis.")
+            logger.error("Here it is:")
+            for line in message_string.split('\n'):
+                logger.info(">> %s" % line)
 
     def __unicode__(self):
         if len(self.message_string) > 10:
@@ -411,11 +416,17 @@ class EmailAnalyzer(object):
         grab some emails and process them.
         """
         status = FAIL
-        if self._fetch_access_token() == OK:
-            creds = self._generate_oauth2_string(base64_encode=False)
-            status = self._fetch_sent_messages(creds)
-        else:
-            logger.error("Unable to obtain access token. Aborting import")
+        try:
+            if self._fetch_access_token() == OK:
+                creds = self._generate_oauth2_string(base64_encode=False)
+                status = self._fetch_sent_messages(creds)
+            else:
+                logger.error("Unable to obtain access token. Aborting import")
+        except EmailProcessingException:
+            logger.info("Encountered email we can't process. Skipping.")
+            self.profile.last_message_processed += 1
+            self.profile.save()
+            status = YIELD
         if status == YIELD:
             q = Queue(connection=conn)
             logger.info("Queuing another job in EmailAnalyzer")
