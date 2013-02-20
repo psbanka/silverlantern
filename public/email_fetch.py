@@ -395,7 +395,7 @@ class EmailAnalyzer(object):
         with stats.word_use_save:
             for key, word_use in self.word_use_dict.items():
                 word_use.save()
-        logger.info("Finished save (%s seconds)." % time.time() - start_time)
+        logger.info("Finished save (%s seconds)." % (time.time() - start_time))
 
     def _fetch_access_token(self):
         """
