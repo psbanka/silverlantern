@@ -143,6 +143,9 @@ def oauth2callback(request):
 
 @login_required
 def study(request):
+    """
+    Primary landing page for the user to decide what they want to study.
+    """
     if request.method == 'POST':  # If the form has been submitted...
         form = WordChooserForm(request.POST)  # A form bound to the POST data
         if form.is_valid():  # All validation rules pass
@@ -169,6 +172,26 @@ def study(request):
         'learning_list': learning_list,
         'form': form,
     })
+
+
+def definition(request, word_to_lookup):
+    """
+    the user wants to look a word up
+    """
+    return render(request, 'definition.html')
+
+
+@login_required
+def remove(request, word_to_remove):
+    """
+    the user wants to remove a word from their study-list
+    """
+
+    word_object = Word.objects.get(word__exact=word_to_remove)
+    word_to_learn = WordsToLearn.objects.filter(
+        user__id=request.user.id, word=word_object)
+    word_to_learn.delete()
+    return HttpResponseRedirect('/study')
 
 
 def contact(request):

@@ -2,16 +2,29 @@
 {% load crispy_forms_tags %}
 
 {% block content %}
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script src="https://s3.amazonaws.com/silverlantern_static/js/bootstrap.js"></script>
+
     {% if learning_list %}
     <div class="well">
     <h3>Current words</h3>
     <table class="well table table-condensed table-striped table-bordered">
-        <thead>
-        <tr><th class="span2">Word</th><th class="span2">added</th><th class="span1">Done?</th></tr>
-        </thead>
+        <thead><tr>
+            <th class="span2">Word</th>
+            <th class="span1">Definition</th>
+            <th class="span1">Remove</th>
+            <th class="span2">added</th>
+            <th class="span1">Done?</th>
+        </tr></thead>
         <tbody>
         {% for word in learning_list %}
-        <tr><td class="span2">{{word.word}}</td><td class="span2">{{word.date_added}}</td><td class="span1">{% if word.date_completed %}<i class="icon-ok"></i>{% endif %}</td></tr>
+        <tr>
+            <td class="span2">{{word.word}}</td>
+            <td class="span1"><a href="#" title="definition" id="foo" data-poload="/def/{{word.word}}"><i class="icon-search"></a></i></td>
+            <td class="span1"><a href="/remove/{{word.word}}"><i class="icon-trash"></a></i></td>
+            <td class="span2">{{word.date_added}}</td>
+            <td class="span1">{% if word.date_completed %}<i class="icon-ok"></i>{% endif %}</td>
+        </tr>
         {% endfor %}
         </tbody>
     </table>
@@ -19,4 +32,17 @@
     {% endif %}
     <h3 class='well'>Choose a new word!</h3> 
     {% crispy form %}
+    <script type="text/javascript">
+        $(document).ready(function() {
+            //$('*[data-poload]').bind('hover',function(){
+            $('#foo').click(function(){
+                var e = $(this);
+                // e.unbind('hover');
+                $.get(e.data('poload'),function(d) {
+                    e.popover({content: d, html: true}).popover('show');
+                });
+                return false;
+            });
+        });
+    </script>
 {% endblock %}
