@@ -174,6 +174,16 @@ def study(request):
     })
 
 
+@login_required
+def gallery(request):
+    """
+    Choosing a new word is fun! Show them off
+    """
+    return render(request, 'gallery.html', {
+        'page_name': 'gallery',
+    })
+
+
 def definition(request, word_to_lookup):
     """
     the user wants to look a word up
