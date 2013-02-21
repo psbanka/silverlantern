@@ -9,30 +9,50 @@
 <div class="container">
   <div class="row">
     <div class="well span12">
-      <h2>Gallery of new words</h2>
-      <div class="span1"><h3 class="badge badge-success">Hipster</h3></div>
-      <div class="span1"><h3 class="badge badge-info">Charming</h3></div>
-      <div class="span1"><h3 class="badge badge-info">Academic</h3></div>
-      <div class="span1"><h3 class="badge badge-info">Romantic</h3></div>
-      <div class="span1"><h3 class="badge badge-info">Whimsical</h3></div>
-    </div>
-    <div class="row">
-    </div>
-    <div class="span4">
-      <h4>abhorrent</h2>  
-      <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh,ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>  
-      <p><a class="btn btn-success btn-large" href="#">Study this word</a></p>  
-    </div>
-    <div class="span4">
-      <h4>abrasive</h2>  
-      <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh,ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>  
-      <p><a class="btn btn-success btn-large" href="#">Study this word</a></p>  
-    </div>
-    <div class="span4">
-      <h4>alluring</h2>  
-      <p>Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh,ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>  
-      <p><a class="btn btn-success btn-large" href="#">Study this word</a></p>  
-    </div>
-  </div>
-</div>
+      <div class="page-header">
+        <h1>Gallery of new words <small>Look through our showroom of fantastic words</small></h1>
+      </div>
+    </div> <!-- span 12 -->
+  </div> <!-- row -->
+
+  <div span="row">
+    <div class="span12">
+
+      <ul class="nav nav-pills">
+        <li class="active">
+          <a href="#"><h4>Hipster</h4></a>
+        </li>
+        <li><a href="#"><h4>Charming</h4></a></li>
+        <li><a href="#"><h4>Brainiac</h4></a></li>
+        <li><a href="#"><h4>Romantic</h4></a></li>
+        <li><a href="#"><h4>Whimsical</h4></a></li>
+      </ul>
+
+      <div class="row">
+        <div class="span1"><a href="#"><i class="icon-chevron-left"></a></i></div>
+        <ul class="thumbnails">
+          <li id="abhorrent" class="span3"> <div class="thumbnail">
+            <h4>abhorrent</h4>  
+            <p class="muted">Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh,ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>  
+            <p><a class="btn btn-success btn-large" href="#">Study this word</a></p>  
+          </div>
+          </li>
+          <li id="abrasive" class="span3"> <div class="thumbnail">
+            <h4>abrasive</h4>  
+            <p class="muted">Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh,ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>  
+            <p><a class="btn btn-success btn-large" href="#">Study this word</a></p>  
+          </div>
+          </li>
+          <li id="alluring" class="span3"> <div class="thumbnail">
+            <h4>alluring</h4>  
+            <p class="muted">Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh,ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>  
+            <p><a class="btn btn-success btn-large" href="#">Study this word</a></p>  
+          </div>
+          </li>
+        </ul>
+        <div class="span1"><a href="#"><i class="icon-chevron-right"></a></i></div>
+      </div>
+    </div> <!-- span 12 -->
+  </div> <!-- row -->
+</div> <!-- container -->
 {% endblock %}
