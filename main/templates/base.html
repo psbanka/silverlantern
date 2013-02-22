@@ -9,16 +9,20 @@
    <link href="https://s3.amazonaws.com/silverlantern_static/css/bootstrap.css" rel="stylesheet">
    <link href="https://s3.amazonaws.com/silverlantern_static/css/bootstrap-responsive.css" rel="stylesheet">
    <link href="https://s3.amazonaws.com/silverlantern_static/css/docs.css" rel="stylesheet">
+{% if controller_name %}
+   <script src="/staticfiles/js/{{controller_script}}"></script>
+{% endif %}
    <title>{% block title %}{% endblock %}</title>
 </head>
 
 
 
 
-<body id="{% block body_id %}{% endblock %}">
-  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+<body id="{% block body_id %}{% endblock %}"{% if controller_name %} ng-controller="{{controller_name}}"{% endif %}>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
   <script src="https://s3.amazonaws.com/silverlantern_static/js/bootstrap.js"></script>
   <script src="https://s3.amazonaws.com/silverlantern_static/js/bootstrap-dropdown.js"></script>
+  <script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.0.5/angular.min.js"></script>
   <script>
 $(function() {
   // Setup drop down menu
