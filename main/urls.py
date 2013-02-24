@@ -22,5 +22,8 @@ urlpatterns = patterns(
     url(r'^thanks/$', views.thanks, name='thanks'),
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
     url(r'^admin/', include(admin.site.urls)),
-    url(r'^/json/gallery_words/$', rest.gallery_words, name="gallery_words"),
+    url(r'^json/gallery_words/(?P<category>.*)$',
+        rest.gallery_words, name="gallery_words"),
+    url(r'^json/gallery_categories/$',
+        rest.gallery_categories, name="gallery_words"),
 )

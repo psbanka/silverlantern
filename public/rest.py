@@ -2,36 +2,46 @@ from django.http import HttpResponse
 import json
 
 
-def gallery_words(request):
+def gallery_categories(request):
+    """
+    provide a list of possible gallery categories
+    """
+    response_data = [
+        {"name": "hipster"},
+        {"name": "charming"},
+        {"name": "brainiac"},
+        {"name": "romantic"},
+        {"name": "whimsical"}
+    ]
+    return HttpResponse(
+        json.dumps(response_data), content_type="application/json")
+
+
+def gallery_words(request, category):
     """
     REST call for getting a dictionary of words to display
     in the gallery
     """
-    response_data = [
-        {
-            'name': "abhorrent",
-            'info': "Donec id elit non mi porta gravida at eget metus. Fusce "
-                    "dapibus, tellus ac cursus commodo, tortor mauris "
-                    "condimentum nibh,ut fermentum massa justo sit amet "
-                    "risus. Etiam porta sem malesuada magna mollis euismod. "
-                    "Donec sed odio dui.",
-        },
-        {
-            'name': "abrasive",
-            'info': "Donec id elit non mi porta gravida at eget metus. Fusce "
-                    "dapibus, tellus ac cursus commodo, tortor mauris "
-                    "condimentum nibh,ut fermentum massa justo sit amet "
-                    "risus. Etiam porta sem malesuada magna mollis euismod. "
-                    "Donec sed odio dui.",
-        },
-        {
-            'name': "alluring",
-            'info': "Donec id elit non mi porta gravida at eget metus. Fusce "
-                    "dapibus, tellus ac cursus commodo, tortor mauris "
-                    "condimentum nibh,ut fermentum massa justo sit amet "
-                    "risus. Etiam porta sem malesuada magna mollis euismod. "
-                    "Donec sed odio dui.",
-        }
-    ]
+    words = []
+    if category == "hipster":
+        words = ['abhorrent', 'abrasive', 'alluring', 'ambiguous']
+    elif category == "charming":
+        words = ['darling', 'magical', 'effervescent']
+    elif category == "brainiac":
+        words = ['ignominious', 'ersatz', 'perspecacious']
+    elif category == "romantic":
+        words = ['pulchritudious', 'erstwhile', 'serendipitous']
+    elif category == "whimsical":
+        words = ['eggregious', 'austensible', 'faustian']
+    response_data = []
+    for word in words:
+        response_data.append({
+            'name': word,
+            'info': "Donec id elit non mi porta gravida at eget metus. "
+                    "Fusce dapibus, tellus ac cursus commodo, tortor "
+                    "mauris condimentum nibh,ut fermentum massa justo sit "
+                    "amet risus. Etiam porta sem malesuada magna mollis "
+                    "euismod. Donec sed odio dui.",
+        })
     return HttpResponse(
         json.dumps(response_data), content_type="application/json")

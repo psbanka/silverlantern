@@ -16,7 +16,13 @@ angular.module('silver.service', []).
  
 angular.module('silver.directive', []);
  
-angular.module('silver.filter', []);
+angular.module('silver.filter', []).
+  filter('startFrom', function() {
+    return function(input, start) {
+        start = +start; //parse to int
+        return input.slice(start);
+    };
+  });
  
 myAppModule = angular.module('silver', ['silver.service', 'silver.directive', 'silver.filter']).
   run(function(greeter, user) {
@@ -32,30 +38,30 @@ myAppModule = angular.module('silver', ['silver.service', 'silver.directive', 's
   });
 
 // A Controller for your app
-var galleryCtrl = function($scope, greeter, user) {
-    $scope.greeting = greeter.greet(user.name);
+var galleryCtrl = function($scope, $http) {
 
-    $scope.categories = [
-        {"name": "hipster", "class": "active"},
-        {"name": "charming", "class": "notactive"},
-        {"name": "brainiac", "class": "notactive"},
-        {"name": "romantic", "class": "notactive"},
-        {"name": "whimsical", "class": "notactive"}
-    ];
+    $scope.pageSize = 3;
+    $scope.startIndex = 0;
 
-    $scope.words = [
-        {
-            name: "abhorrent",
-            info: "Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh,ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui."
-        },
-        {
-            name: "abrasive",
-            info: "Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh,ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui."
-        },
-        {
-            name: "alluring",
-            info: "Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh,ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui."
-        }
-    ];
+    $scope.current_category = "hipster";
+
+    $scope.isSelected = function(category) {
+        return $scope.current_category === category;
+    };
+
+    $scope.setCategory = function(category_name) {
+        $scope.current_category = category_name;
+        $http.get('/json/gallery_words/' + $scope.current_category).success(function(data) {
+            $scope.words = data;
+        });
+    };
+
+    $http.get('/json/gallery_categories/').success(function(data) {
+        $scope.categories = data;
+    });
+
+    $http.get('/json/gallery_words/' + $scope.current_category).success(function(data) {
+        $scope.words = data;
+    });
 };
 
