@@ -14,7 +14,7 @@
     </div> <!-- span 12 -->
   </div> <!-- row -->
 
-  <div span="row">
+  <div class="row">
     <div class="span12">
 
       <ul class="nav nav-pills categories">
@@ -24,21 +24,29 @@
       </ul>
 
       <div class="row">
-      <div class="span1 verital-align:middle">
-        <a ng-click="backward()" href="#"><i ng-hide="startIndex < 1" class="icon-chevron-left"></i></a>
-      </div>
-      <ul class="thumbnails span10 words">
-        <li class="span3" ng-repeat="word in words | startFrom: startIndex | limitTo:pageSize">
+        <div class="span1 verital-align:middle">
+          <a ng-click="backward()" href="#">
+            <img ng-hide="startIndex < 1" src="http://localhost/staticfiles/img/chevron-left-green.png" alt="Prev page"/>
+          </a>
+        </div>
+        <ul class="thumbnails span9 words">
+          <li class="span2" ng-repeat="word in words | startFrom: startIndex | limitTo:pageSize">
             <div class="thumbnail">
-                <h4>{[{word.name}]}</h4>
-                <p class="muted">{[{word.info}]}</p>
-                <p><a class="btn btn-success btn-large" href="#">Study this word</a></p>  
+              <h4>{[{word.name}]}</h4>
+              <p class="muted">{[{word.info}]}</p>
+              <p>
+                <a class="btn btn-success btn-large" href="#">Study this word</a>
+                <a class="btn btn-link" href="#">No thanks</a>
+              </p>  
             </div>
-        </li>
-      </ul>
-      <div class="span1">
-        <a ng-click="forward()" href="#"><i ng-hide="(startIndex+pageSize) >= words.length" class="icon-chevron-right"></i></a>
-      </div>
+          </li>
+        </ul>
+        <div class="span1">
+          <a ng-click="forward()" href="#">
+            <img ng-hide="(startIndex+pageSize) >= words.length" src="http://localhost/staticfiles/img/chevron-right-green.png" alt="Next page"/>
+          </a>
+        </div>
+      </div> <!-- row -->
     </div> <!-- span 12 -->
   </div> <!-- row -->
 </div> <!-- container -->

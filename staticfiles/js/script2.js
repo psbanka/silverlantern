@@ -43,22 +43,19 @@ myAppModule = angular.module('silver', ['silver.service', 'silver.directive', 's
 // A Controller for your app
 var galleryCtrl = function($scope, $http) {
 
-    $scope.pageSize = 3;
+    $scope.pageSize = 4;
     $scope.startIndex = 0;
-
     $scope.current_category = "hipster";
 
     $scope.isSelected = function(category) {
         return $scope.current_category === category;
     };
-
     $scope.setCategory = function(category_name) {
         $scope.current_category = category_name;
         $http.get('/json/gallery_words/' + $scope.current_category).success(function(data) {
             $scope.words = data;
         });
     };
-
     $scope.forward = function() {
         $scope.startIndex += 1;
     };

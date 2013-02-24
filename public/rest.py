@@ -24,7 +24,10 @@ def gallery_words(request, category):
     """
     words = []
     if category == "hipster":
-        words = ['abhorrent', 'abrasive', 'alluring', 'ambiguous']
+        words = [
+            'abhorrent', 'abrasive', 'alluring',
+            'ambiguous', 'apathetic', 'amuck'
+        ]
     elif category == "charming":
         words = ['darling', 'magical', 'effervescent']
     elif category == "brainiac":
