@@ -1,5 +1,6 @@
 from django.conf.urls import patterns, url, include
 from public import views
+from public import rest
 from django.contrib.auth.views import login
 
 # Uncomment the next two lines to enable the admin:
@@ -21,4 +22,5 @@ urlpatterns = patterns(
     url(r'^thanks/$', views.thanks, name='thanks'),
     url(r'^admin/doc/', include('django.contrib.admindocs.urls')),
     url(r'^admin/', include(admin.site.urls)),
+    url(r'^/json/gallery_words/$', rest.gallery_words, name="gallery_words"),
 )

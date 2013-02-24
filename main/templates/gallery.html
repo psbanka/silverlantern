@@ -18,36 +18,21 @@
   <div span="row">
     <div class="span12">
 
-      <ul class="nav nav-pills">
-        <li class="active">
-          <a href="#"><h4>Hipster</h4></a>
+      <ul class="nav nav-pills categories">
+        <li class="{[{category.class}]}" ng-repeat="category in categories">
+          <a href="#"><h4>{[{category.name}]}</h4></a>
         </li>
-        <li><a href="#"><h4>Charming</h4></a></li>
-        <li><a href="#"><h4>Brainiac</h4></a></li>
-        <li><a href="#"><h4>Romantic</h4></a></li>
-        <li><a href="#"><h4>Whimsical</h4></a></li>
       </ul>
 
       <div class="row">
       <div class="span1 verital-align:middle"><a href="#"><i class="icon-chevron-left"></a></i></div>
-      <ul class="thumbnails span10">
-        <li id="abhorrent" class="span3"> <div class="thumbnail">
-          <h4>abhorrent</h4>  
-          <p class="muted">Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh,ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>  
-          <p><a class="btn btn-success btn-large" href="#">Study this word</a></p>  
-        </div>
-        </li>
-        <li id="abrasive" class="span3"> <div class="thumbnail">
-          <h4>abrasive</h4>  
-          <p class="muted">Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh,ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>  
-          <p><a class="btn btn-success btn-large" href="#">Study this word</a></p>  
-        </div>
-        </li>
-        <li id="alluring" class="span3"> <div class="thumbnail">
-          <h4>alluring</h4>  
-          <p class="muted">Donec id elit non mi porta gravida at eget metus. Fusce dapibus, tellus ac cursus commodo, tortor mauris condimentum nibh,ut fermentum massa justo sit amet risus. Etiam porta sem malesuada magna mollis euismod. Donec sed odio dui. </p>  
-          <p><a class="btn btn-success btn-large" href="#">Study this word</a></p>  
-        </div>
+      <ul class="thumbnails span10 words">
+        <li class="span3" ng-repeat="word in words">
+            <div class="thumbnail">
+                <h4>{[{word.name}]}</h4>
+                <p class="muted">{[{word.info}]}</p>
+                <p><a class="btn btn-success btn-large" href="#">Study this word</a></p>  
+            </div>
         </li>
       </ul>
       <div class="span1"><a href="#"><i class="icon-chevron-right"></a></i></div>

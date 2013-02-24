@@ -181,7 +181,7 @@ def gallery(request):
     """
     return render(request, 'gallery.html', {
         'page_name': 'gallery',
-        'controller_name': 'GalleryCtrl',
+        'controller_name': 'galleryCtrl',
         'controller_script': 'galleryController.js',
     })
 
