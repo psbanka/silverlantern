@@ -5,7 +5,6 @@
   <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
   <script src="https://s3.amazonaws.com/silverlantern_static/js/bootstrap.js"></script>
 
-
 <div class="container">
   <div class="row">
     <div class="well span10">
@@ -25,7 +24,9 @@
       </ul>
 
       <div class="row">
-      <div class="span1 verital-align:middle"><a href="#"><i class="icon-chevron-left"></i></a></div>
+      <div class="span1 verital-align:middle">
+        <a ng-click="backward()" href="#"><i ng-hide="startIndex < 1" class="icon-chevron-left"></i></a>
+      </div>
       <ul class="thumbnails span10 words">
         <li class="span3" ng-repeat="word in words | startFrom: startIndex | limitTo:pageSize">
             <div class="thumbnail">
@@ -35,7 +36,9 @@
             </div>
         </li>
       </ul>
-      <div class="span1"><a href="#"><i class="icon-chevron-right"></i></a></div>
+      <div class="span1">
+        <a ng-click="forward()" href="#"><i ng-hide="(startIndex+pageSize) >= words.length" class="icon-chevron-right"></i></a>
+      </div>
     </div> <!-- span 12 -->
   </div> <!-- row -->
 </div> <!-- container -->

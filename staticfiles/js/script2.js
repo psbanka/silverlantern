@@ -19,6 +19,9 @@ angular.module('silver.directive', []);
 angular.module('silver.filter', []).
   filter('startFrom', function() {
     return function(input, start) {
+        if (input === undefined) {
+            return input;
+        }
         start = +start; //parse to int
         return input.slice(start);
     };
@@ -54,6 +57,18 @@ var galleryCtrl = function($scope, $http) {
         $http.get('/json/gallery_words/' + $scope.current_category).success(function(data) {
             $scope.words = data;
         });
+    };
+
+    $scope.forward = function() {
+        $scope.startIndex += 1;
+    };
+
+    $scope.hideBackButton = function() {
+        $scope.startIndex < 1;
+    };
+
+    $scope.backward = function() {
+        $scope.startIndex -= 1;
     };
 
     $http.get('/json/gallery_categories/').success(function(data) {
