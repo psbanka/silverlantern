@@ -14,8 +14,30 @@ angular.module('silver.service', []).
     }
   });
  
-angular.module('silver.directive', []);
- 
+angular.module('silver.directive', []).
+  directive('fadey', function() {
+    return {
+      restrict: 'A',
+      link: function(scope, elm, attrs) {
+        var duration = parseInt(attrs.fadey, 10);
+        if (isNaN(duration)) {
+          duration = 500;
+        }
+        elm = jQuery(elm);
+        elm.hide();
+        elm.fadeIn(duration);
+
+        scope.destroy = function(complete) {
+          elm.fadeOut(duration, function() {
+            if (complete) {
+              complete.apply(scope);
+            }
+          });
+        };
+      }
+    };
+  });
+
 angular.module('silver.filter', []).
   filter('startFrom', function() {
     return function(input, start) {
@@ -59,6 +81,19 @@ var galleryCtrl = function($scope, $http) {
     $scope.forward = function() {
         $scope.startIndex += 1;
     };
+
+    /* This section would be used if we added and removed items from
+     * The list instead of simply changing the indexes around display.
+    $scope.clearItem = function(item) {
+        var idx = $scope.items.indexOf(item);
+        if (idx !== -1) {
+            //injected into repeater scope by fadey directive
+            this.destroy(function() {
+                $scope.items.splice(idx, 1);
+            });
+        }
+    };
+    */
 
     $scope.hideBackButton = function() {
         $scope.startIndex < 1;

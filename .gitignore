@@ -31,3 +31,8 @@ nosetests.xml
 
 # Translations
 *.mo
+bin/
+local/
+share/
+include/
+silverlantern_dev.sqlite
