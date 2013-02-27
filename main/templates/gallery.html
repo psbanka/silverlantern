@@ -32,11 +32,11 @@
         <ul class="thumbnails span9 words">
           <li class="span2" ng-repeat="word in words | startFrom: startIndex | limitTo:pageSize" fadey="900">
             <div class="thumbnail">
+              <button class="close">&times</button>
               <h4>{[{word.name}]}</h4>
               <p class="muted">{[{word.info}]}</p>
               <p>
                 <a class="btn btn-success btn-large" href="#">Study this word</a>
-                <a class="btn btn-link" href="#">No thanks</a>
               </p>  
             </div>
           </li>
