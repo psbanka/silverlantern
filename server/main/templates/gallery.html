@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+{% load crispy_forms_tags %}
+
+{% block content %}
+  <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+  <script src="https://s3.amazonaws.com/silverlantern_static/js/bootstrap.js"></script>
+
+<div class="container">
+  <div class="row">
+    <div class="well span10">
+      <div class="page-header">
+        <h1>Gallery of new words <small>Look through our fantastic showroom</small></h1>
+      </div>
+    </div> <!-- span 12 -->
+  </div> <!-- row -->
+
+  <div class="row">
+    <div class="span12">
+
+      <ul class="nav nav-pills categories">
+        <li ng-class="{active: isSelected(category.name)}" ng-repeat="category in categories">
+          <a ng-click="setCategory(category.name)" href="#"><h4>{[{category.name}]}</h4></a>
+        </li>
+      </ul>
+
+      <div class="row">
+        <div class="span1 verital-align:middle">
+          <a ng-click="backward()" href="#">
+            <img ng-hide="startIndex < 1" src="http://localhost/app/img/chevron-left-green.png" alt="Prev page"/>
+          </a>
+        </div>
+        <ul class="thumbnails span9 words">
+          <li class="span2" ng-repeat="word in words | startFrom: startIndex | limitTo:pageSize" fadey="900">
+            <div class="thumbnail">
+              <button class="close">&times</button>
+              <h4>{[{word.word}]}</h4>
+              <p class="muted">{[{word.info}]}</p>
+              <p>
+                <a class="btn btn-success btn-large" href="#">Study this word</a>
+              </p>  
+            </div>
+          </li>
+        </ul>
+        <div class="span1">
+          <a ng-click="forward()" href="#">
+            <img ng-hide="(startIndex+pageSize) >= words.length" src="http://localhost/app/img/chevron-right-green.png" alt="Next page"/>
+          </a>
+        </div>
+      </div> <!-- row -->
+    </div> <!-- span 12 -->
+  </div> <!-- row -->
+</div> <!-- container -->
+{% endblock %}
