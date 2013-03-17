@@ -47,6 +47,27 @@ describe('SilverLining controllers', function() {
       $httpBackend.flush();
       expect(scope.words.length).toBe(6);
     });
+
+    it('should change to three words when selecting another category', function() {
+      $httpBackend.flush();
+      scope.setCategory("charming");
+      expect(scope.words.length).toBe(3);
+    });
+
+    it('should be able to change the category selected', function() {
+      $httpBackend.flush();
+      expect(scope.isSelected("charming")).toBe(false);
+      expect(scope.isSelected("hipster")).toBe(true);
+      scope.setCategory("charming");
+      expect(scope.isSelected("charming")).toBe(true);
+      expect(scope.words.length).toBe(3);
+    });
+
+    it('should populate wordData', function() {
+      $httpBackend.flush();
+      expect(scope.wordData['charming'][0]['word']).toBe('darling');
+    });
+
   });
 });
 
