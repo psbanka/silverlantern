@@ -5,17 +5,19 @@ function galleryCtrl($scope, $http) {
 
     $scope.pageSize = 4;
     $scope.startIndex = 0;
-    $scope.current_category = "";
+    $scope.currentCategory = "";
     $scope.categories = [];
     $scope.wordData = {};
 
     $scope.isSelected = function(category) {
-        return $scope.current_category === category;
+        return $scope.currentCategory === category;
     };
+
     $scope.setCategory = function(category_name) {
-        $scope.current_category = category_name;
+        $scope.currentCategory = category_name;
         $scope.words = $scope.wordData[category_name];
     };
+
     $scope.forward = function() {
         $scope.startIndex += 1;
     };
@@ -29,8 +31,8 @@ function galleryCtrl($scope, $http) {
     };
 
     $http.get('/json/gallery_words/').success(function(data) {
-        // Our initial current_category is whatever the first category is
-        $scope.current_category = data[0]["category"];
+        // Our initial currentCategory is whatever the first category is
+        $scope.currentCategory = data[0]["category"];
         $scope.words = data[0]["words"];
         $scope.categories = [];
         for (var index in data) {

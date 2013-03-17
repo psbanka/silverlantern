@@ -2,3 +2,4 @@
 
 /* Services */
 
+angular.module('silver.service', []);
