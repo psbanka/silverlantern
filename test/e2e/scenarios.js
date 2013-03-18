@@ -2,14 +2,18 @@
 
 /* http://docs.angularjs.org/guide/dev_guide.e2e-testing */
 
-describe('PhoneCat App', function() {
+describe('Silverlantern App', function() {
 
-  it('should redirect index.html to index.html#/phones', function() {
-    browser().navigateTo('../../app/index.html');
-    expect(browser().location().url()).toBe('/phones');
+  it('should be able to navigate to /login/', function() {
+    browser().navigateTo('/login/');
+    debugger;
+    input('username').enter('admin');
+    input('password').enter('xyzzy1');
+    element('.btn').click();
+    expect(browser().location().url()).toBe('/profile/');
   });
 
-
+/*
   describe('Phone list view', function() {
 
     beforeEach(function() {
@@ -18,7 +22,7 @@ describe('PhoneCat App', function() {
 
 
     it('should filter the phone list as user types into the search box', function() {
-      expect(repeater('.phones li').count()).toBe(20);
+      expect(repeater('.phones li').count()).toBe(10);
 
       input('query').enter('nexus');
       expect(repeater('.phones li').count()).toBe(1);
@@ -62,4 +66,5 @@ describe('PhoneCat App', function() {
       expect(binding('phoneId')).toBe('nexus-s');
     });
   });
+*/
 });

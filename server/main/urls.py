@@ -7,9 +7,18 @@ from django.contrib.auth.views import login
 from django.contrib import admin
 admin.autodiscover()
 
+#urlpatterns = patterns('',
+#url(r'^$', 'myproject.views.home', name='home'),
+#url(r'^views/main.html/$', 'myproject.views.main_view'),
+#url(r'^views/post.html', 'myproject.views.post_view'),
+#url(r'^views/(?P<page>[-\w]+.html)/$', 'myproject.views.angular_views'),
+#url(r'^(?P<path>.*)/$', 'myproject.views.angular_redirector'),
+#)
+
 urlpatterns = patterns(
     '',
     url(r'^$', views.index, name='index'),
+    url(r'^partials/(?P<template_name>.*)', views.partial_helper),
     url(r'^login/$', login, {'template_name': 'auth.html'}),
     url(r'^logout/$', views.logout_view),
     url(r'^accounts/profile/$', views.profile, name="profile"),

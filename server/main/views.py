@@ -24,11 +24,13 @@ logger = logging.getLogger(__name__)
 
 
 def index(request):
-    if request.user.is_authenticated():
-        return HttpResponseRedirect('/accounts/profile')
+    #if request.user.is_authenticated():
+    #    return HttpResponseRedirect('/accounts/profile')
     return render_to_response(
-        'index.html', {}, context_instance=RequestContext(request))
+        'app.html', {}, context_instance=RequestContext(request))
 
+def partial_helper(request, template_name):
+    return render_to_response('%s' % template_name)
 
 def login_user(request):
     state = "Please log in below..."
