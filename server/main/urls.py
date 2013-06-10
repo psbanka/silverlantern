@@ -17,15 +17,14 @@ admin.autodiscover()
 
 urlpatterns = patterns(
     '',
-    url(r'^$', views.index, name='index'),
     url(r'^partials/(?P<template_name>.*)', views.partial_helper),
+    #url(r'^gallery/$', views.gallery, name="gallery"),
     url(r'^login/$', login, {'template_name': 'auth.html'}),
     url(r'^logout/$', views.logout_view),
     url(r'^accounts/profile/$', views.profile, name="profile"),
     url(r'^oauth2callback/$', views.oauth2callback, name="oauth2callback"),
     url(r'^fetch_my_mail/$', views.fetch_my_mail, name="fetch_my_mail"),
     url(r'^study/$', views.study, name="study"),
-    url(r'^gallery/$', views.gallery, name="gallery"),
     url(r'^remove/(?P<word_to_remove>.*)$', views.remove, name="remove"),
     url(r'^def/(?P<word_to_lookup>.*)$', views.definition, name="definition"),
     url(r'^thanks/$', views.thanks, name='thanks'),
@@ -37,4 +36,5 @@ urlpatterns = patterns(
         rest.gallery_categories, name="gallery_words"),
     url(r'^contact$', views.contact, name='contact'),
     url(r'^test/e2e$', views.e2e, name='e2e'),
+    url(r'^.*$', views.index, name='index'),
 )

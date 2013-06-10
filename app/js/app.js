@@ -9,21 +9,21 @@ var myAppModule = angular.module('silver', ['silver.service', 'silver.directive'
     }).
     config(['$routeProvider', function($routeProvider) {
         $routeProvider.
-            when('/', {templateUrl: '/partials/front.html', controller: galleryCtrl}).
-            when('/gallery', {templateUrl: '/partials/gallery.html', controller: galleryCtrl}).
-            when('/study', {templateUrl: '/partials/study.html', controller: galleryCtrl}).
+            when('/', {
+                controller: galleryCtrl,
+                templateUrl: '/partials/front.html'
+            }).
+            when('/foo', {
+                controller: galleryCtrl,
+                templateUrl: '/partials/foo.html'
+            }).
+            when('/gallery', {
+                controller: galleryCtrl,
+                templateUrl: '/partials/gallery.html'
+            }).
+            when('/study', {
+                controller: galleryCtrl,
+                templateUrl: '/partials/study.html'
+            }).
             otherwise({redirectTo: '/'});
     }]);
-
-/*
-    // A DJANGO-focused example
-    config(['$routeProvider', function($routeProvider) {
-        $routeProvider.
-            when('/', {templateUrl: 'views/main.html', controller: 'MainCtrl'}).
-            when('/about', {templateUrl: 'views/about.html'}).
-            when('/help', {templateUrl: 'views/help.html'}).
-            when('/post/:id', {templateUrl: 'views/postRouter.html', controller: 'PostCtrl'}).
-            otherwise({redirectTo: '/'});
-    }])
-*/
-//when('/phones/:phoneId', {templateUrl: 'partials/phone-detail.html', controller: PhoneDetailCtrl}).

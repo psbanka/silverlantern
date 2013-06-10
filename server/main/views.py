@@ -26,8 +26,9 @@ logger = logging.getLogger(__name__)
 def index(request):
     #if request.user.is_authenticated():
     #    return HttpResponseRedirect('/accounts/profile')
+    print request.user.id
     return render_to_response(
-        'app.html', {}, context_instance=RequestContext(request))
+        'app.html', {'userid': request.user.id}, context_instance=RequestContext(request))
 
 def partial_helper(request, template_name):
     return render_to_response('%s' % template_name)
