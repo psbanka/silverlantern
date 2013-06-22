@@ -4,7 +4,8 @@
       <div class="page-header">
          <h1>Gallery of new words <small>Look through our fantastic showroom</small></h1>
           <!-- TODO: How do I get the username from Django? -->
-         <p>Your username is: {{ user.username }}</p>
+         <p>Your username is: {[{ currentUser.username }]}</p>
+          <p>Authenticated: {[{ currentUser.authenticated }]}</p>
       </div>
     </div> <!-- span 12 -->
   </div> <!-- row -->

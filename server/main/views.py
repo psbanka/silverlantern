@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 from django.http import HttpResponseRedirect, HttpResponse
+from django.utils import simplejson
 #from django.http import Http404
 #from django.shortcuts import get_object_or_404
 from django.shortcuts import render
@@ -23,8 +24,6 @@ logger = logging.getLogger(__name__)
 
 
 def index(request):
-    #if request.user.is_authenticated():
-    #    return HttpResponseRedirect('/accounts/profile')
     return render_to_response(
         'app.html', {}, context_instance=RequestContext(request))
 
@@ -36,7 +35,29 @@ def partial_helper(request, template_name):
     :param template_name: The name of the partial template to render
     :return: rendered template
     """
-    return render_to_response(template_name, {'username': request.user})
+    model = {
+        'user': request.user,
+        'authenticated': request.user.is_authenticated(),
+    }
+    return render_to_response(template_name, model)
+
+
+def current_user(request):
+    """
+    RESTFUL call to obtain information about the currently-logged in user
+    :param request: Django request object
+    :return: JSON data about the current user
+    """
+    data = {
+        'username': request.user.username,
+        'email': request.user.email,
+        'authenticated': request.user.is_authenticated(),
+        'first_name': request.user.first_name,
+        'token_expiration': request.user.get_profile().token_expiration,
+    }
+
+    return_json = simplejson.dumps(data)
+    return HttpResponse(return_json, mimetype='application/json')
 
 
 def login_user(request):
