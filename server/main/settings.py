@@ -14,7 +14,7 @@ DATABASES = {
         'NAME': 'silverlantern_dev.sqlite',
     }
 }
-if os.environ.get('ENV') != 'dev':
+if os.environ.get('ENV', 'dev') != 'dev':
     import dj_database_url
     DATABASES = {
         'default': dj_database_url.config(),

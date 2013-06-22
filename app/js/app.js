@@ -2,6 +2,7 @@
 
 /* App Module */
 
+// TODO: How do I indicate which routes require authentication?
 var myAppModule = angular.module('silver', ['silver.service', 'silver.directive', 'silver.filter']).
     config(function($interpolateProvider) {
         $interpolateProvider.startSymbol('{[{');

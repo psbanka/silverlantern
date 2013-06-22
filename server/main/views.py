@@ -19,7 +19,6 @@ from main.static_data import REDIRECT_URI, TEST_OAUTH_CALLBACK
 from main.models import Word, WordsToLearn
 import django.utils.timezone
 
-# Get an instance of a logger
 logger = logging.getLogger(__name__)
 
 
@@ -29,8 +28,16 @@ def index(request):
     return render_to_response(
         'app.html', {}, context_instance=RequestContext(request))
 
+
 def partial_helper(request, template_name):
-    return render_to_response('%s' % template_name)
+    """
+    Provides access to Angular's routing
+    :param request: not used
+    :param template_name: The name of the partial template to render
+    :return: rendered template
+    """
+    return render_to_response(template_name, {'username': request.user})
+
 
 def login_user(request):
     state = "Please log in below..."

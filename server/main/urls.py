@@ -7,14 +7,8 @@ from django.contrib.auth.views import login
 from django.contrib import admin
 admin.autodiscover()
 
-#urlpatterns = patterns('',
-#url(r'^$', 'myproject.views.home', name='home'),
-#url(r'^views/main.html/$', 'myproject.views.main_view'),
-#url(r'^views/post.html', 'myproject.views.post_view'),
-#url(r'^views/(?P<page>[-\w]+.html)/$', 'myproject.views.angular_views'),
-#url(r'^(?P<path>.*)/$', 'myproject.views.angular_redirector'),
-#)
 
+# TODO: Eliminate all routes that are not REST calls, base, or partials.
 urlpatterns = patterns(
     '',
     url(r'^$', views.index, name='index'),
@@ -24,8 +18,8 @@ urlpatterns = patterns(
     url(r'^accounts/profile/$', views.profile, name="profile"),
     url(r'^oauth2callback/$', views.oauth2callback, name="oauth2callback"),
     url(r'^fetch_my_mail/$', views.fetch_my_mail, name="fetch_my_mail"),
-    url(r'^study/$', views.study, name="study"),
-    url(r'^gallery/$', views.gallery, name="gallery"),
+
+    # RESTFUL CALLS ############################
     url(r'^remove/(?P<word_to_remove>.*)$', views.remove, name="remove"),
     url(r'^def/(?P<word_to_lookup>.*)$', views.definition, name="definition"),
     url(r'^thanks/$', views.thanks, name='thanks'),
