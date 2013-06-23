@@ -10,9 +10,11 @@ class InterestingWordSerializer(serializers.HyperlinkedModelSerializer):
     """
     Deploys words via the REST API
     """
+    word = serializers.RelatedField(many=False)
+    category = serializers.RelatedField(many=False)
+
     class Meta:
         model = InterestingWord
-        fields = ('category', 'word', 'info')
 
 
 class UserSerializer(serializers.HyperlinkedModelSerializer):

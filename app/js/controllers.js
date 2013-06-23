@@ -1,6 +1,5 @@
 'use strict';
 
-//PhoneDetailCtrl.$inject = ['$scope', '$routeParams'];
 function galleryCtrl($scope, $rootScope, $http) {
 
     $scope.pageSize = 4;
