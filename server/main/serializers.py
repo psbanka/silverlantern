@@ -20,7 +20,6 @@ class InterestingWordSerializer(serializers.HyperlinkedModelSerializer):
 class UserSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = User
-        fields = ('url', 'username', 'email', 'groups')
 
 
 class WordSerializer(serializers.HyperlinkedModelSerializer):

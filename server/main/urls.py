@@ -21,20 +21,21 @@ router.register(r'interestingwords', serializer_views.InterestingWordViewSet)
 # TODO: Eliminate all routes that are not REST calls, base, or partials.
 urlpatterns = patterns(
     '',
+    # HOOKS INTO ANGULAR #######################
     url(r'^$', views.index, name='index'),
     url(r'^partials/(?P<template_name>.*)', views.partial_helper),
+
+    # RESTFUL CALLS ############################
+    url(r'^api/', include(router.urls)),
+    url(r'^api/current_user/$', views.current_user, name="current_user"),
+
+    # TODO: Below here are "legacy" calls.
     url(r'^login/$', login, {'template_name': 'auth.html'}),
     url(r'^logout/$', views.logout_view),
-    url(r'^accounts/profile/$', views.profile, name="profile"),
+
     url(r'^oauth2callback/$', views.oauth2callback, name="oauth2callback"),
     url(r'^fetch_my_mail/$', views.fetch_my_mail, name="fetch_my_mail"),
 
-    url(r'^api/', include(router.urls)),
-    url(r'^interesting_words/$', serializer_views.interesting_word_list),
-    url(r'^interesting_words/(?P<pk>[0-9]+)/$', serializer_views.interesting_word_detail),
-
-    # RESTFUL CALLS ############################
-    url(r'^json/current_user/$', views.current_user, name="current_user"),
     url(r'^remove/(?P<word_to_remove>.*)$', views.remove, name="remove"),
     url(r'^def/(?P<word_to_lookup>.*)$', views.definition, name="definition"),
     url(r'^thanks/$', views.thanks, name='thanks'),

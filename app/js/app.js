@@ -13,6 +13,7 @@ var myAppModule = angular.module('silver', ['silver.service', 'silver.directive'
             when('/', {templateUrl: '/partials/front.html', controller: galleryCtrl}).
             when('/gallery', {templateUrl: '/partials/gallery.html', controller: galleryCtrl}).
             when('/study', {templateUrl: '/partials/study.html', controller: galleryCtrl}).
+            when('/profile', {templateUrl: '/partials/profile.html', controller: galleryCtrl}).
             otherwise({redirectTo: '/'});
     }]);
 

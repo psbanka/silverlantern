@@ -11,7 +11,10 @@ function galleryCtrl($scope, $rootScope, $http) {
         authenticated: false,
         username: "",
         email: "",
-        firstName: ""
+        firstName: "<unknown>",
+        lastName: "UNKNOWN",
+        googleAuthUrl: "UNKNOWN",
+        readyToImport: false
     };
 
     $scope.isSelected = function (category) {
@@ -51,16 +54,13 @@ function galleryCtrl($scope, $rootScope, $http) {
     $scope.getInterestingWords = function(url) {
         $http.get(url).success(function (data) {
             // This receives data in the following form:
-            // "count": 18,
             // "next": "http://localhost:8000/api/interestingwords/?page=2",
-            // "previous": null,
             // "results": [
             //     {
             //         "category": "http://localhost:8000/api/categories/1/",
             //         "word": "http://localhost:8000/api/words/1/",
             //         "info": "now is the time for all good men to come to the aid of their country",
-            //         "url": "http://localhost:8000/api/interestingwords/1/"
-            //     },
+            //     }, ...
 
             var nextUrl = data["next"];
             //var count = data["count"];
@@ -92,12 +92,17 @@ function galleryCtrl($scope, $rootScope, $http) {
 
     $scope.getInterestingWords("/api/interestingwords/?format=json");
 
-    $http.get("/json/current_user/").success(function (data) {
+    $http.get("/api/current_user/").success(function (data) {
         // Find out information about the currently-logged in user
         $rootScope.currentUser.authenticated = data["authenticated"];
         $rootScope.currentUser.username = data["username"]
         $rootScope.currentUser.email = data["email"]
         $rootScope.currentUser.firstName = data["first_name"]
-    })
+        $rootScope.currentUser.googleAuthUrl = data["google_auth_url"]
+        $rootScope.currentUser.readyToImport = data["ready_to_import"]
+    }).error(function(data, status, headers, config) {
+        $rootScope.currentUser.username = "ERROR COMMUNICATING WITH SERVER";
+        console.log(data);
+    });
 }
 

@@ -50,6 +50,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAdminUser',),
     'PAGINATE_BY': 10
 }
+LOGIN_REDIRECT_URL = '/#/profile'
 SERIALIZATION_MODULES = {
     'json': 'wadofstuff.django.serializers.json'
 }

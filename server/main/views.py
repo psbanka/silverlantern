@@ -44,16 +44,40 @@ def partial_helper(request, template_name):
 
 def current_user(request):
     """
-    RESTFUL call to obtain information about the currently-logged in user
+    RESTFUL call to obtain information about the currently-logged in user, also provides
+    information about how much of their email is currently imported.
     :param request: Django request object
     :return: JSON data about the current user
     """
+    client_id = os.environ['GOOGLE_CLIENT_ID']
+    scope = 'https://mail.google.com/ profile'
+
+    url = ''
+    if os.environ['ENV'] == 'dev':
+        url = TEST_OAUTH_CALLBACK
+    else:
+        url = "https://accounts.google.com/o/oauth2/auth?scope=%s&" \
+              "redirect_uri=%s&response_type=code&client_id=%s"
+        url %= (scope, REDIRECT_URI, client_id)
+
+    ready_to_import = False
+    profile = request.user.get_profile()
+    if request.user.email and profile.code:
+        ready_to_import = True
+    percent_imported = 0.0
+    current = profile.last_message_processed
+    final = profile.last_message_on_server
+    if current and final:
+        percent_imported = 100.0 * (float(current) / float(final))
     data = {
         'username': request.user.username,
         'email': request.user.email,
         'authenticated': request.user.is_authenticated(),
         'first_name': request.user.first_name,
         'token_expiration': request.user.get_profile().token_expiration,
+        'ready_to_import': ready_to_import,
+        'percent_imported': percent_imported,
+        'google_auth_url': url,
     }
 
     return_json = simplejson.dumps(data)
@@ -90,44 +114,6 @@ def logout_view(request):
     """
     logout(request)
     return HttpResponseRedirect('/')
-
-#from rest_framework.decorators import api_view, authentication_classes, permission_classes
-#
-#@api_view(['GET'])
-#@authentication_classes((SessionAuthentication, BasicAuthentication))
-#@permission_classes((IsAuthenticated,))
-def profile(request):
-    #url = "https://accounts.google.com/o/oauth2/auth?scope=%s&state=%s
-    #&redirect_uri=%s&response_type=code&client_id=%s&access_type=%s"
-    client_id = os.environ['GOOGLE_CLIENT_ID']
-    scope = 'https://mail.google.com/ profile'
-
-    url = ''
-    if os.environ['ENV'] == 'dev':
-        url = TEST_OAUTH_CALLBACK
-    else:
-        url = "https://accounts.google.com/o/oauth2/auth?scope=%s&"\
-            "redirect_uri=%s&response_type=code&client_id=%s"
-        url %= (scope, REDIRECT_URI, client_id)
-
-    ready_to_import = False
-    profile = request.user.get_profile()
-    if (request.user.email and profile.code):
-        ready_to_import = True
-    percent_imported = 0.0
-    current = profile.last_message_processed
-    final = profile.last_message_on_server
-    if (current and final):
-        percent_imported = 100.0 * (float(current) / float(final))
-    model = {
-        'user': request.user,
-        'ready_to_import': ready_to_import,
-        'percent_imported': percent_imported,
-        'title': "Profile for %s" % request.user.first_name,
-        'page_name': "profile",
-        'google_auth_url': url,
-    }
-    return render_to_response('profile.html', model)
 
 
 @login_required
