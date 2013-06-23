@@ -1,0 +1,163 @@
+[
+  {
+    "model": "main.category",
+    "pk": 1,
+    "fields": {
+      "category": "whimsical"
+    }
+  },
+  {
+    "model": "main.category",
+    "pk": 2,
+    "fields": {
+      "category": "romantic"
+    }
+  },
+  {
+    "model": "main.category",
+    "pk": 3,
+    "fields": {
+      "category": "hipster"
+    }
+  },
+  {
+    "model": "main.category",
+    "pk": 4,
+    "fields": {
+      "category": "brainiac"
+    }
+  },
+  {
+    "model": "main.category",
+    "pk": 5,
+    "fields": {
+      "category": "charming"
+    }
+  },
+  {
+    "model": "main.word",
+    "pk": 1,
+    "fields": {
+      "word": "abhorrent"
+    }
+  },
+  {
+    "model": "main.word",
+    "pk": 2,
+    "fields": {
+      "word": "abrasive"
+    }
+  },
+  {
+    "model": "main.word",
+    "pk": 3,
+    "fields": {
+      "word": "alluring"
+    }
+  },
+  {
+    "model": "main.word",
+    "pk": 4,
+    "fields": {
+      "word": "ambiguous"
+    }
+  },
+  {
+    "model": "main.word",
+    "pk": 5,
+    "fields": {
+      "word": "apathetic"
+    }
+  },
+  {
+    "model": "main.word",
+    "pk": 6,
+    "fields": {
+      "word": "amuck"
+    }
+  },
+  {
+    "model": "main.word",
+    "pk": 7,
+    "fields": {
+      "word": "darling"
+    }
+  },
+  {
+    "model": "main.word",
+    "pk": 8,
+    "fields": {
+      "word": "magical"
+    }
+  },
+  {
+    "model": "main.word",
+    "pk": 9,
+    "fields": {
+      "word": "effervescent"
+    }
+  },
+  {
+    "model": "main.word",
+    "pk": 10,
+    "fields": {
+      "word": "ignominious"
+    }
+  },
+  {
+    "model": "main.word",
+    "pk": 11,
+    "fields": {
+      "word": "ersatz"
+    }
+  },
+  {
+    "model": "main.word",
+    "pk": 12,
+    "fields": {
+      "word": "perspecacious"
+    }
+  },
+  {
+    "model": "main.word",
+    "pk": 13,
+    "fields": {
+      "word": "pulchritudinous"
+    }
+  },
+  {
+    "model": "main.word",
+    "pk": 14,
+    "fields": {
+      "word": "erstwhile"
+    }
+  },
+  {
+    "model": "main.word",
+    "pk": 15,
+    "fields": {
+      "word": "serendipitous"
+    }
+  },
+  {
+    "model": "main.word",
+    "pk": 16,
+    "fields": {
+      "word": "eggregious"
+    }
+  },
+  {
+    "model": "main.word",
+    "pk": 17,
+    "fields": {
+      "word": "austensible"
+    }
+  },
+  {
+    "model": "main.word",
+    "pk": 18,
+    "fields": {
+      "word": "faustian"
+    }
+  }
+]

@@ -35,30 +35,7 @@
     });
 </script>
 
-<!-- LOGGED-OUT Navbar
-<div class="navbar navbar-inverse navbar-fixed-top">
-  <div class="navbar-inner">
-    <div class="container">
-      <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-      <div class="nav-collapse collapse">
-        <ul class="nav pull-right">
-          <li class="active">
-            <a href="/">Home</a>
-          </li>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </div>
-</div>
-================================================== -->
-
 <!-- Navbar
-TODO: How do I change the navbar above to reflect if the user is signed in or not?
 ================================================== -->
 <div class="navbar navbar-inverse navbar-fixed-top">
     <div class="navbar-inner">
@@ -70,18 +47,22 @@ TODO: How do I change the navbar above to reflect if the user is signed in or no
             </button>
             <div class="nav-collapse collapse">
                 <ul class="nav pull-right">
-                    <li>
+                    <li ng-show="currentUser.authenticated === true">
                         <a href="/accounts/profile">Profile</a>
                     </li>
-                    <li class="active">
+                    <li ng-show="currentUser.authenticated === true" class="active">
                         <a href="/#/gallery">Gallery</a>
                     </li>
-                    <li>
+                    <li ng-show="currentUser.authenticated === true">
                         <a href="/#/study">Study</a>
                     </li>
-                    <li ng-show="currentUser.authenticated === true"><a href="/logout">Sign off</a></li>
-                    <li ng-show="currentUser.authenticated === false"><a href="/users/sign_up">Sign Up</a></li>
-                    <li ng-show="currentUser.authenticated === false" class="divider-vertical"></li>
+                    <li ng-show="currentUser.authenticated === false">
+                        <a href="/users/sign_up">Sign Up</a>
+                    </li>
+                    <li class="divider-vertical"></li>
+                    <li ng-show="currentUser.authenticated === true">
+                        <a href="/logout">Sign off</a>
+                    </li>
                     <li ng-show="currentUser.authenticated === false" class="dropdown">
                         <a class="dropdown-toggle" href="#" data-toggle="dropdown">Sign In <strong
                                 class="caret"></strong></a>

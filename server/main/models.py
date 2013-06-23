@@ -5,6 +5,7 @@ import logging
 import django.utils.timezone
 
 logger = logging.getLogger(__name__)
+WORD_CATEGORIES = ["hipster", "brianiac", "charming", "whimsical", "romantic"]
 
 
 class InterestingEmail(models.Model):
@@ -14,19 +15,38 @@ class InterestingEmail(models.Model):
     """
     text = models.TextField()
 
-    def __unicode__(self):
-        return "%s" % (self.word)
-
 
 class Word(models.Model):
     """
-    Our basic word database. We keep track of all our English words
-    here, as well possibly, as other interesting features.
+    Our basic word database. We keep track of all our English words here
     """
     word = models.CharField(max_length=100, unique=True)
 
     def __unicode__(self):
         return "%s" % (self.word)
+
+
+class Category(models.Model):
+    """
+    possible
+    here, as well possibly, as other interesting features.
+    """
+    category = models.CharField(max_length=100, unique=True)
+    def __unicode__(self):
+        return "%s" % self.category
+
+
+class InterestingWord(models.Model):
+    """
+    Our database of all words that are fun to learn
+    """
+    word = models.ForeignKey(Word)
+    category = models.ForeignKey(Category)
+    info = models.CharField(max_length=1000)
+
+    def __unicode__(self):
+        info_snippet = self.info if len(self.info) < 5 else self.info[:5]
+        return "IW: %s/%s/%s" % (self.word, self.category, info_snippet)
 
 
 class WordUse(models.Model):

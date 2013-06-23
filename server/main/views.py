@@ -83,11 +83,19 @@ def login_user(request):
 
 
 def logout_view(request):
+    """
+    The user is requesting logout
+    :param request:
+    :return: Redirect to the opening page
+    """
     logout(request)
     return HttpResponseRedirect('/')
 
-
-@login_required
+#from rest_framework.decorators import api_view, authentication_classes, permission_classes
+#
+#@api_view(['GET'])
+#@authentication_classes((SessionAuthentication, BasicAuthentication))
+#@permission_classes((IsAuthenticated,))
 def profile(request):
     #url = "https://accounts.google.com/o/oauth2/auth?scope=%s&state=%s
     #&redirect_uri=%s&response_type=code&client_id=%s&access_type=%s"

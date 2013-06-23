@@ -46,9 +46,17 @@ TEMPLATE_LOADERS = (
 ROOT_URLCONF = 'main.urls'
 WSGI_APPLICATION = 'main.wsgi.application'
 TEMPLATE_DIRS = (os.path.join(PROJECT_PATH, 'templates'),)
+REST_FRAMEWORK = {
+    'DEFAULT_PERMISSION_CLASSES': ('rest_framework.permissions.IsAdminUser',),
+    'PAGINATE_BY': 10
+}
+SERIALIZATION_MODULES = {
+    'json': 'wadofstuff.django.serializers.json'
+}
 INSTALLED_APPS = (
     'main',
     'crispy_forms',
+    'rest_framework',
     'django.contrib.auth',
     'django.contrib.contenttypes',
     'django.contrib.sessions',

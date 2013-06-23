@@ -14,8 +14,8 @@
     <div class="span12">
 
       <ul class="nav nav-pills categories">
-        <li ng-class="{active: isSelected(category.name)}" ng-repeat="category in categories">
-          <a ng-click="setCategory(category.name)" href=""><h4>{[{category.name}]}</h4></a>
+        <li ng-class="{active: isSelected(category)}" ng-repeat="category in categories">
+          <a ng-click="setCategory(category)" href=""><h4>{[{category}]}</h4></a>
         </li>
       </ul>
 

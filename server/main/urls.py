@@ -1,11 +1,21 @@
 from django.conf.urls import patterns, url, include
 from main import views
+from main import serializer_views
 from main import rest
 from django.contrib.auth.views import login
 
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
+
 admin.autodiscover()
+
+from rest_framework import routers
+
+router = routers.DefaultRouter()
+router.register(r'users', serializer_views.UserViewSet)
+router.register(r'words', serializer_views.WordViewSet)
+router.register(r'categories', serializer_views.CategoryViewSet)
+router.register(r'interestingwords', serializer_views.InterestingWordViewSet)
 
 
 # TODO: Eliminate all routes that are not REST calls, base, or partials.
@@ -18,6 +28,10 @@ urlpatterns = patterns(
     url(r'^accounts/profile/$', views.profile, name="profile"),
     url(r'^oauth2callback/$', views.oauth2callback, name="oauth2callback"),
     url(r'^fetch_my_mail/$', views.fetch_my_mail, name="fetch_my_mail"),
+
+    url(r'^api/', include(router.urls)),
+    url(r'^interesting_words/$', serializer_views.interesting_word_list),
+    url(r'^interesting_words/(?P<pk>[0-9]+)/$', serializer_views.interesting_word_detail),
 
     # RESTFUL CALLS ############################
     url(r'^json/current_user/$', views.current_user, name="current_user"),
@@ -32,4 +46,7 @@ urlpatterns = patterns(
         rest.gallery_categories, name="gallery_words"),
     url(r'^contact$', views.contact, name='contact'),
     url(r'^test/e2e$', views.e2e, name='e2e'),
+    url(r'^api-auth/', include('rest_framework.urls',
+                               namespace='rest_framework')),
+
 )
