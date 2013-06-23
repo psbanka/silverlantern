@@ -48,42 +48,49 @@ function galleryCtrl($scope, $rootScope, $http) {
         return a;
     }
 
-    $http.get("/api/interestingwords/?format=json").success(function (data) {
-        // This receives data in the following form:
-        // "count": 18,
-        // "next": "http://localhost:8000/api/interestingwords/?page=2",
-        // "previous": null,
-        // "results": [
-        //     {
-        //         "category": "http://localhost:8000/api/categories/1/",
-        //         "word": "http://localhost:8000/api/words/1/",
-        //         "info": "now is the time for all good men to come to the aid of their country",
-        //         "url": "http://localhost:8000/api/interestingwords/1/"
-        //     },
+    $scope.getInterestingWords = function(url) {
+        $http.get(url).success(function (data) {
+            // This receives data in the following form:
+            // "count": 18,
+            // "next": "http://localhost:8000/api/interestingwords/?page=2",
+            // "previous": null,
+            // "results": [
+            //     {
+            //         "category": "http://localhost:8000/api/categories/1/",
+            //         "word": "http://localhost:8000/api/words/1/",
+            //         "info": "now is the time for all good men to come to the aid of their country",
+            //         "url": "http://localhost:8000/api/interestingwords/1/"
+            //     },
 
-        // TODO: Page through the lists given.
-        var count = data["count"];
-        var categories = [];
-        for (var index in data["results"]) {
-            var wordData = data["results"][index];
-            var category = wordData.category;
-            var word = wordData.word;
-            var info = wordData.info;
-            categories.push(category);
-            if ($scope.wordData[category] === undefined) {
-                $scope.wordData[category] = [];
+            var nextUrl = data["next"];
+            //var count = data["count"];
+            var categories = $scope.categories;
+            for (var index in data["results"]) {
+                var wordData = data["results"][index];
+                var category = wordData.category;
+                var word = wordData.word;
+                var info = wordData.info;
+                categories.push(category);
+                if ($scope.wordData[category] === undefined) {
+                    $scope.wordData[category] = [];
+                }
+                $scope.wordData[category].push({
+                    "word": word,
+                    "info": info
+                })
+                if ($scope.currentCategory === "") {
+                    $scope.currentCategory = category;
+                }
             }
-            $scope.wordData[category].push({
-                "word": word,
-                "info": info
-            })
-            if ($scope.currentCategory === "") {
-                $scope.currentCategory = category;
+            $scope.categories = $scope.unique(categories);
+            $scope.words = $scope.wordData[$scope.currentCategory];
+            if (nextUrl) {
+                $scope.getInterestingWords(nextUrl)
             }
-        }
-        $scope.categories = $scope.unique(categories);
-        $scope.words = $scope.wordData[$scope.currentCategory];
-    });
+        });
+    },
+
+    $scope.getInterestingWords("/api/interestingwords/?format=json");
 
     $http.get("/json/current_user/").success(function (data) {
         // Find out information about the currently-logged in user
